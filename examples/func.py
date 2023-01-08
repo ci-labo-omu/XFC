@@ -86,7 +86,6 @@ def aiming_function(vx, vy, normal_astangle):
     vectang = math.degrees(math.atan2(vy,vx)) #calculates asteroid travel angle
 
     # print(vectang2, vectang, vectang2-vectang)
-
     sidea = math.sqrt(vx ** 2 + vy ** 2) #asteroid speed
     sideb = 800 #800 is Bullet speed
 

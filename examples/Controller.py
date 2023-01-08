@@ -34,36 +34,7 @@ class NewController(KesslerController):
         """
         Create your fuzzy logic controllers and other objects here
         """
-        self.wack = 0
 
-        individual = [599, 486, 157, 104, 243, 59, 522, 521, 83, 872, 191, 71, 862, 215, 439, 274, 719, 960, 700, 664,
-                      74, 624, 651, 176, 547, 747, 251, 168, 474, 389, 277, 948, 656, 705, 571, 225, 542, 918, 466, 787,
-                      795, 291, 235, 615]
-        #              1    2    3    4    5    6    7   8    9   10   11   12  13   14   15   16   17   18   19   20   21  22   23    24  25   26   27   28   29   30   31   32   33   34   35   36   37   38   39   40   41   42   43   44
-
-        """
-        Gene Constants
-        """
-        self.roe_zone = individual[36] / 1000 * 500  # 112.5
-        self.roe_zone = 610 / 1000 * 500  # 305
-        # Maximum Distance for Multitasking, Default: 240
-        self.fuzzy_roe = individual[37] / 1000 * self.roe_zone  #
-        self.fuzzy_roe = 918 / 1000 * self.roe_zone
-        # Minimum Distance for Fuzzy application, Default: 120
-        self.edgeclear = 542 / 1000 * 275
-        # determines the distance from the edge before edge clearing behavior starts
-        self.wack_coef = individual[38] / 1000 * 200
-        self.wack_coef = 230
-        # Controls Rate of Fire, considering distance. 10 is 1 per target, Default: 100
-        self.brake_speed_power = individual[39] / 1000 * 500
-        # Controls Speed at which the craft will not exceed. Variable by size. Default: 250, lower is faster.
-        self.SAD_base = individual[40] / 1000 * 100
-        # S&D closeness to target, base. Default: 50
-        self.SAD_size_adjust = individual[41] / 1000 * 100
-        # S&D closeness to target, varies with size. Default: 62
-        self.evasive_base = individual[42] / 1000 * 100
-        # Closeness where evasive behavior is triggered. Default: 45
-        self.evasive_size_adjust = individual[43] / 1000 * 50
         # Closeness to where evasive behavior is triggered. Variable by size. Default: 20
         def leftrightcheck(shipangle, astangle):
             diff = shipangle - astangle + self.ant_angle
@@ -283,29 +254,26 @@ class NewController(KesslerController):
         ast_list = input_data["asteroids"]
         dist_list = [math.dist(ownship['position'], ast['position']) for ast in ast_list]
         closest = np.argmin(dist_list)
+        dist_closest = dist_list[closest]
         ang = np.array(ast_list[closest]['position']) - np.array(ownship['position'])
         ang = angle360(math.degrees(np.arctan2(ang[1], ang[0])))
-        print("あんぐ")
-        print(ang)
-        print(ownship['heading'])
+
         angdiff = ang - ownship['heading']
         if angdiff < -180: angdiff += 360
         elif angdiff > 180: angdiff -= 360
 
-        """print(angdiff)
         if angdiff > 0: turn_rate = random.uniform(0.0, ownship['turn_rate_range'][1])
         else: turn_rate = random.uniform( ownship['turn_rate_range'][0], 0.0)
-        """
+
         #もし最近接が前にいたら後退
-        """
-        if abs(angdiff) < 30:
+
+        if abs(angdiff) < 30 and  dist_closest < 50:
             thrust = random.uniform(ownship['thrust_range'][0], 0.0)
         elif abs(angdiff)>150:
             thrust = random.uniform(0.0, ownship['thrust_range'][1])
-        else: thrust = random.uniform(ownship['thrust_range'][0], ownship['thrust_range'][1])"""
+        else: thrust = random.uniform(ownship['thrust_range'][0], ownship['thrust_range'][1])
         #fire_bullet = random.uniform(0.45, 1.0) < 0.5
-        fire_bullet = abs(angdiff) < 15
-        print(fire_bullet)
+        fire_bullet = abs(angdiff) < 10
 
         speed = math.sqrt(ownship['velocity'][0]**2 + ownship['velocity'][1]**2)
         veloangle = math.degrees(math.atan2(ownship['velocity'][1], ownship['velocity'][0]))
@@ -330,19 +298,18 @@ class NewController(KesslerController):
         else:
             anglefromcenter = 0
 
-        ab2 =ast_list[closest]['position'][1] - ownship['position'][1]
-        lr2 = ast_list[closest]['position'][0] - ownship['position'][0]
-        op2 = lr2
+        vertical = ast_list[closest]['position'][1] - ownship['position'][1]
+        horizontal = ast_list[closest]['position'][0] - ownship['position'][0]
         hyp2 = dist_list[closest]
-        s_rangle_inrange = self.rangle(op2, hyp2, ab2, lr2)
+        s_rangle_inrange = self.rangle(horizontal, hyp2, vertical, horizontal)
         astangle = angle360(s_rangle_inrange)
         vx_mult = ast_list[closest]['velocity'][0]
         vy_mult = ast_list[closest]['velocity'][1]
         normal_astangle_mult = angle360(s_rangle_inrange)
         ant_angle2 = aiming_function(vx_mult, vy_mult, normal_astangle_mult)
-        orientation2 = abs(ownship['heading'] - s_rangle_inrange + ant_angle2)
+        #orientation2 = abs(ownship['heading'] - s_rangle_inrange + ant_angle2)
         bloop = 0
-
+        """
         if ast_list[closest]['size'] == 4:
             self.Con4_sim.input['A4'] = orientation2
             self.Con4_sim.input['B4'] = dist_list[closest]
@@ -363,170 +330,13 @@ class NewController(KesslerController):
             self.Con1_sim.input['B1'] = dist_list[closest]
             self.Con1_sim.compute()
             Favorability = self.Con1_sim.output['Con1']
+        print(Favorability)
         if Favorability > 0:
                 Target = closest
                 bloop = bloop + 1
 
-        abovebelow = input_data['asteroids'][closest]['position'][1] - ownship['position'][1]
-        leftright = input_data['asteroids'][closest]['position'][0] - ownship['position'][0]
-        opposite = (input_data['asteroids'][closest]['position'][0] - ownship['position'][0])
-        hypotenuse = dist_list[closest]
-        s_rangle = self.rangle(opposite, hypotenuse, abovebelow, leftright)
-        orientation = abs(ownship['heading'] - s_rangle)
-        if bloop > 0:
-            if ast_list[closest]['size'] < 4 and dist_list[closest] > 103:
-                Target_orientation = orientation2
-                Target_angle = s_rangle_inrange
-                Target_Distance = dist_list[closest]
-                # Target_size = inrange_size[Target]
-                # Target_Favorability = Favorability[m]
-
-            else:
-                Target_orientation = orientation
-                Target_angle = s_rangle
-                Target_Distance = dist_list[closest]
-                # Target_size = input_data['asteroids'][closest_asteroid]['size']
-                # Target_Favorability = 0
-        elif bloop == 0:
-            Target_orientation = orientation
-            Target_angle = s_rangle
-            Target_Distance = dist_list[closest]
-            # Target_size = input_data['asteroids'][closest_asteroid]['size']
-            # Target_Favorability = 0
-
-        """
-        s_rangle is the angle relative to the ship necessary for the ship to point at the closest asteroid
-        """
-        """ Positive if above, negative if below"""
-        """ negative if left, positive if right"""
-
-        normal_shipangle = angle360(ownship['heading'])
-        normal_astangle = angle360(s_rangle)
-        normal_cangle = angle360(anglefromcenter)
-        normal_target_angle = angle360(Target_angle)
-        clast_size = ast_list[closest]['size']
-        dodge_counter = 0
-        if Target_orientation == orientation:
-            vx_mult = input_data['asteroids'][closest]['velocity'][0]
-            vy_mult = input_data['asteroids'][closest]['velocity'][1]
-
-            self.ant_angle = aiming_function(vx_mult, vy_mult, normal_astangle)
-            Target_orientation = abs(ownship['heading'] - s_rangle + self.ant_angle)
-            leftright_target = self.leftright(normal_shipangle, normal_target_angle)
-        else:
-            vx_mult = ast_list[closest]['velocity'][0]
-            vy_mult = ast_list[closest]['velocity'][1]
-            Target_s_rangle = s_rangle_inrange
-            Target_normal_astangle = angle360(Target_s_rangle)
-            self.ant_angle = aiming_function(vx_mult, vy_mult, Target_normal_astangle)
-            Target_orientation = abs(ownship['heading'] - Target_s_rangle + self.ant_angle)
-            leftright_target = self.leftright(normal_shipangle, normal_target_angle)
-        vx_mult = ast_list[closest]['velocity'][0]
-        vy_mult = ast_list[closest]['velocity'][1]
-        self.ant_angle = aiming_function(vx_mult, vy_mult, normal_astangle)
-        leftright_dodge = self.leftright(normal_shipangle, normal_astangle)
-        """
-        This is the master if function in which it determines which behavior mode to fall into 
         """
 
-        if  dist_list[closest] < 45 + (5 * clast_size):  # Respawn Behavior
-            if orientation > 160:
-                thrust = ownship['thrust_range'][1]
-            elif orientation <= 160:
-                thrust = 0
-                turn_rate = 180
-
-        else:
-
-            if speed > 1 + (dist_list[closest] / self.brake_speed_power):  # Braking Speed Determinant
-
-                """
-                Braking Manuever- For if the ship is going to fast. Probably best for when there's a lot of 
-                asteroids and you do you don't want it to slignshot past on into another
-                """
-
-                t_orientation = abs(ownship['heading'] - travel_angle)
-                print('t_orientation')
-                print(t_orientation)
-                if travel_angle == 0:
-                    pass
-                elif t_orientation > 60:
-                    thrust = ownship['thrust_range'][1]
-                elif t_orientation < 60:
-                    thrust = ownship['thrust_range'][0]
-                else:
-                    print('something wonky afoot')
-
-            elif dist_list[closest] < self.evasive_base + (self.evasive_size_adjust * clast_size):
-                """Evasive Manuevers, I think we could expand this to considering the closest three 
-                    asteroids and fuzzily deciding which direction to flee in
-                    for cases where an asteroid is perpindicularly approaching it needs to be able to distinguish left and right anf
-                    behave accordingly """
-                dodge_counter = 1
-                if orientation > 90:
-                    thrust = ownship['thrust_range'][1]
-                elif orientation > 90 and orientation < 90:
-                    thrust = 0
-                else:
-                    thrust = ownship['thrust_range'][0]
-                print(leftright_dodge)
-                print('leftright_dodge')
-
-                if leftright_dodge == 0 or leftright_dodge == 1:
-                    if leftright_dodge == 0 and orientation > 1:
-                        turn_rate = 180
-                    elif leftright_dodge == 0 and orientation <= 1:
-                        turn_rate = 90
-                    elif leftright_dodge == 1 and orientation > 1:
-                        turn_rate = -180
-                    else:
-                        turn_rate = -90
-
-            elif ownship['position'][0] > 800 - self.edgeclear or ownship['position'][0] < self.edgeclear or ownship['position'][1] > 600 - self.edgeclear or ownship['position'][1] < self.edgeclear:
-                turn = self.leftright(normal_shipangle, normal_cangle)
-                center_orientation = abs(ownship['heading'] - anglefromcenter)
-                if center_orientation < 150:
-                    thrust = ownship['thrust_range'][1]
-                elif turn == 0:
-                    turn_rate = 180
-                else:
-                    turn_rate = -180
-
-                """
-                # Search and Destroy
-                elif shortest_distance > 50 + (62 * clast_size):
-                ship.thrust = ship.thrust_range[1]
-                """
-            # Search and Destroy Also Aiming for Target, will probs give it aiming for dodging
-            elif dist_list[closest] > self.SAD_base + (self.SAD_size_adjust * clast_size) and dodge_counter == 0:
-                thrust = ownship['thrust_range'][1]
-
-            if leftright_target == 0 or leftright_target == 1:
-                if leftright_target == 0 and Target_orientation > 3:
-                    turn_rate = 180
-                elif leftright_target == 0 and Target_orientation <= 3:
-                    turn_rate = 90
-                elif leftright_target == 1 and Target_orientation > 3:
-                    turn_rate = -180
-                else:
-                    turn_rate = -90
-
-            """
-            Shooting Mechanism
-            """
-            self.wack += self.wack_coef  # wack increases until it reaches a fire threshold
-
-
-            if dodge_counter == 0:
-                if orientation < 3 * clast_size or orientation2 < 3:
-                    if self.wack > Target_Distance:
-                        self.wack = 0
-                        fire_bullet = 1
-            else:
-                if Target_orientation < 3 * clast_size or orientation2 < 3:
-                    if self.wack > Target_Distance:
-                        self.wack = 0
-                        fire_bullet = 1
 
         #前後，回転，射撃のタプルをリターンする
         return (thrust, turn_rate, fire_bullet)
