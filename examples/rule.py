@@ -2,191 +2,130 @@ import skfuzzy as fuzz
 import skfuzzy.control as ctrl
 import numpy as np
 
-front_ang = ast_ang - ship_ang
-if abs(front_ang < 15):
-    ownship.shot()
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import itertools
+
+N_pop = 30
+N_rep = 10
+count_max = 10000
+p = 0.9
+# 分割数
+K = 3
+
+df1 = pd.read_csv('data/kadai3_pattern1.txt', header=None, skiprows=[0])
+df2 = pd.read_csv('data/kadai3_pattern2.txt', header=None, skiprows=[0])
+df1.columns = ["x", "y", "label"]
+df2.columns = ["x", "y", "label"]
+
+Ruledict = {
+    0: "x1 is small and x2 is small",
+    1: "x1 is small and x2 is medium",
+    2: "x1 is small and x2 is large",
+    3: "x1 is small and x2 is don't care",
+    4: "x1 is medium and x2 is small",
+    5: "x1 is medium and x2 is medium",
+    6: "x1 is medium and x2 is large",
+    7: "x1 is medium and x2 is don't care",
+    8: "x1 is large and x2 is small",
+    9: "x1 is large and x2 is medium",
+    10: "x1 is large and x2 is large",
+    11: "x1 is large and x2 is don't care",
+    12: "x1 is don't care and x2 is small",
+    13: "x1 is don't care and x2 is medium",
+    14: "x1 is don't care and x2 is large",
+    15: "x1 is don't care and x2 is don't care"
+
+}
+
+x_array = df1.values
+x_values = np.delete(x_array, 2, 1)
 
 
-def closest_rule(ship_position, ast_position):
-    A1 = ctrl.Antecedent(np.arange(0, 301, 1), 'A1')
-    A1['near'] = fuzz.trimf(A1.universe, [-100, 0, 100])
-    A1['close'] = fuzz.trimf(A1.universe, [0, 100, 200])
-    A1['far'] = fuzz.trimf(A1.universe, [100, 200, 300])
-
-    B1 = ctrl.Antecedent(np.arange(0, 361), 'B1')
-    B1['front'] = fuzz.trimf(B1.universe, [-30, 0, 30])
-    B1['middle'] = fuzz.trimf(B1.universe, [0,60, 120])
-    B1['back'] = fuzz.trimf(B1.universe, [60, 210, 360])
+def membership(x):
+    M = np.ones((len(x), len(x[0]) - 1), dtype=float)
+    for i in range(len(x)):
+        # iじゃなくてlabelをうまく使いたい
+        for j in range(len(x[0]) - 1):
+            M[i][j] = (max(0, (1 - np.abs(x[i][2] / 2 - x[i][j]) * 2)))
+    return M
 
 
-    Con1 = ctrl.Consequent(np.arange(-26, 126, 1), 'Con1')
-    Con1['Very Low'] = fuzz.trimf(Con1.universe, [-25, 0, 25])
-    Con1['Low'] = fuzz.trimf(Con1.universe, [0, 25, 50])
-    Con1['Medium'] = fuzz.trimf(Con1.universe, [25, 50, 75])
-    Con1['High'] = fuzz.trimf(Con1.universe, [50, 75, 100])
-    Con1['Very High'] = fuzz.trimf(Con1.universe, [75, 100, 125])
+def membership2(x, k):
+    # q1が0から始まるからk=k-1
+    if k == 3: return 1.0
+    b = 1 / (K - 1)
+    a = k / (K - 1)
 
-    Con1_rule1 = ctrl.Rule(antecedent=(A1['near'] & B1['front']),
-                                consequent=Con1['Very High'], label='Con1_rule1')
-    Con1_rule2 = ctrl.Rule(antecedent=(A1['close'] & B1['front']),
-                                consequent=Con1['High'], label='Con1_rule2')
-    Con1_rule3 = ctrl.Rule(antecedent=(A1['far'] & B1['front']),
-                                consequent=Con1['Medium'], label='Con1_rule3')
-    Con1_rule4 = ctrl.Rule(antecedent=(A1['near'] & B1['middle']),
-                                consequent=Con1['Very High'], label='Con1_rule4')
-    Con1_rule5 = ctrl.Rule(antecedent=(A1['close'] & B1['middle']),
-                                consequent=Con1['High'], label='Con1_rule5')
-    Con1_rule6 = ctrl.Rule(antecedent=(A1['far'] & B1['middle']),
-                                consequent=Con1['Medium'], label='Con1_rule6')
-    Con1_rule7 = ctrl.Rule(antecedent=(A1['near'] & B1['back']),
-                                consequent=Con1['Very High'], label='Con1_rule7')
-    Con1_rule8 = ctrl.Rule(antecedent=(A1['close'] & B1['back']),
-                                consequent=Con1['High'], label='Con1_rule8')
-    Con1_rule9 = ctrl.Rule(antecedent=(A1['far'] & B1['back']),
-                                consequent=Con1['Medium'], label='Con1_rule9')
-
-    Con1_system = ctrl.Con1trolSystem(rules=[Con1_rule1, Con1_rule2, Con1_rule3, Con1_rule4,
-                                                 Con1_rule5, Con1_rule6, Con1_rule7, Con1_rule8,
-                                                 Con1_rule9])
-    self.Con1_sim = ctrl.Con1trolSystemSimulation(Con1_system)
-
-    A2 = ctrl.Antecedent(np.arange(0, 361), 'A2')
-    A2['near'] = fuzz.trimf(A2.universe, [-15, 0, 15])
-    A2['close'] = fuzz.trimf(A2.universe, [15, 45, 75])
-    A2['far'] = fuzz.trimf(A2.universe, [75, 180, 285])
-    # shortest_distance < 50 + (12 * clast_size)
-    B2= ctrl.Antecedent(np.arange(0, 361), 'B2')
-    B2['front'] = fuzz.trimf(B1.universe, [-30, 0, 30])
-    B2['middle'] = fuzz.trimf(B1.universe, [0, 60, 120])
-    B2['back'] = fuzz.trimf(B1.universe, [60, 210, 360])
+    return (max(0, (1 - np.abs(a - x) / b)))
 
 
-
-    Con2 = ctrl.Consequent(np.arange(-26, 126, 1), 'Con2')
-    Con2['Very Low'] = fuzz.trimf(Con2.universe, [-25, 0, 25])
-    Con2['Low'] = fuzz.trimf(Con2.universe, [0, 25, 50])
-    Con2['Medium'] = fuzz.trimf(Con2.universe, [25, 50, 75])
-    Con2['High'] = fuzz.trimf(Con2.universe, [50, 75, 100])
-    Con2['Very High'] = fuzz.trimf(Con2.universe, [75, 100, 125])
-    Con2_rule1 = ctrl.Rule(antecedent=(A2['near'] & B2['In Sights']),
-                                consequent=Con2['Very High'], label='Con2_rule1')
-    Con2_rule2 = ctrl.Rule(antecedent=(A2['Close'] & B2['In Sights']),
-                                consequent=Con2['High'], label='Con2_rule2')
-    Con2_rule3 = ctrl.Rule(antecedent=(A2['Far'] & B2['In Sights']),
-                                consequent=Con2['Medium'], label='Con2_rule3')
-    Con2_rule4 = ctrl.Rule(antecedent=(A2['Imminent'] & B2['Close']),
-                                consequent=Con2['Very High'], label='Con2_rule4')
-    Con2_rule5 = ctrl.Rule(antecedent=(A2['Close'] & B2['Close']),
-                                consequent=Con2['High'], label='Con2_rule5')
-    Con2_rule6 = ctrl.Rule(antecedent=(A2['Far'] & B2['Close']),
-                                consequent=Con2['Medium'], label='Con2_rule6')
-    Con2_rule7 = ctrl.Rule(antecedent=(A2['Imminent'] & B2['Far']),
-                                consequent=Con2['Very High'], label='Con2_rule7')
-    Con2_rule8 = ctrl.Rule(antecedent=(A2['Close'] & B2['Far']),
-                                consequent=Con2['High'], label='Con2_rule8')
-    Con2_rule9 = ctrl.Rule(antecedent=(A2['Far'] & B2['Far']),
-                                consequent=Con2['Medium'], label='Con2_rule9')
-    Con2_system = ctrl.ControlSystem(rules=[Con2_rule1, Con2_rule2, Con2_rule3, Con2_rule4,
-                                                 Con2_rule5, Con2_rule6, Con2_rule7, Con2_rule8,
-                                                 Con2_rule9])
-    self.Con2_sim = ctrl.ControlSystemSimulation(Con2_system)
+M = []
+C_q = []
+# 信頼度
+c = []
 
 
+def fit(x_array, i):
+    q1 = i // 4
+    q2 = i % 4
 
-    f_orientation_size3 = ctrl.Antecedent(np.arange(-91, 271, 1), 'f_orientation_size3')
-    f_orientation_size3['In Sights'] = fuzz.trimf(f_orientation_size3.universe, [-15, 0, 15])
-    f_orientation_size3['Close'] = fuzz.trimf(f_orientation_size3.universe, [15, 45, 75])
-    f_orientation_size3['Far'] = fuzz.trimf(f_orientation_size3.universe, [75, 180, 285])
-    f_hypotenuse_size3 = ctrl.Antecedent(np.arange(0, self.roe_zone + 1, 1), 'f_hypotenuse_size3')
-    f_hypotenuse_size3['Imminent'] = fuzz.trimf(f_hypotenuse_size3.universe, [-80, 0, 80])
-    f_hypotenuse_size3['Close'] = fuzz.trimf(f_hypotenuse_size3.universe, [80, 140, 200])
-    f_hypotenuse_size3['Far'] = fuzz.trimf(f_hypotenuse_size3.universe, [140, 200, 260])
+    m = np.array([membership2(x[0], q1) * membership2(x[1], q2) for x in x_array])
+    return m
 
-    Target_F3 = ctrl.Consequent(np.arange(-26, 126, 1), 'Target_F3')
-    Target_F3['Very Low'] = fuzz.trimf(Target_F3.universe, [-25, 0, 25])
-    Target_F3['Low'] = fuzz.trimf(Target_F3.universe, [0, 25, 50])
-    Target_F3['Medium'] = fuzz.trimf(Target_F3.universe, [25, 50, 75])
-    Target_F3['High'] = fuzz.trimf(Target_F3.universe, [50, 75, 100])
-    Target_F3['Very High'] = fuzz.trimf(Target_F3.universe, [75, 100, 125])
 
-    Target_F3_rule1 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Imminent'] & f_orientation_size3['In Sights']),
-                                consequent=Target_F3['Very High'], label='Target_F3_rule1')
+def rule_change(C_q, CF_q):
+    return [b for b in C_q if CF_q[b] > 0]
 
-    Target_F3_rule2 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Close'] & f_orientation_size3['In Sights']),
-                                consequent=Target_F3['High'], label='Target_F3_rule2')
 
-    Target_F3_rule3 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Far'] & f_orientation_size3['In Sights']),
-                                consequent=Target_F3['Medium'], label='Target_F3_rule3')
+def rule_count(C_q, CF_q):
+    count = 2 * len(CF_q[CF_q > 0])
+    index = np.where(CF_q > 0)
+    for k in index[0]:
+        if k % 4 == 3: count -= 1
+        if k // 4 == 3: count -= 1
 
-    Target_F3_rule4 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Imminent'] & f_orientation_size3['Close']),
-                                consequent=Target_F3['Very High'], label='Target_F3_rule4')
+    return count
 
-    Target_F3_rule5 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Close'] & f_orientation_size3['Close']),
-                                consequent=Target_F3['High'], label='Target_F3_rule5')
 
-    Target_F3_rule6 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Far'] & f_orientation_size3['Close']),
-                                consequent=Target_F3['Medium'], label='Target_F3_rule6')
+for i in range(16):
+    m = fit(x_array, i)
+    m_sum = np.array([0.0, 0.0, 0.0])
+    for l in range(3):
+        m_sum[l] = (np.sum(m[x_array[:, 2] == l]))
+    c.append(m_sum / np.sum(m_sum))
 
-    Target_F3_rule7 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Imminent'] & f_orientation_size3['Far']),
-                                consequent=Target_F3['Very High'], label='Target_F3_rule7')
+# 信頼度
+# print(c)
 
-    Target_F3_rule8 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Close'] & f_orientation_size3['Far']),
-                                consequent=Target_F3['High'], label='Target_F3_rule8')
+# 結論部
+C_q = np.argmax(c, axis=1)
 
-    Target_F3_rule9 = ctrl.Rule(antecedent=(f_hypotenuse_size3['Far'] & f_orientation_size3['Far']),
-                                consequent=Target_F3['Medium'], label='Target_F3_rule9')
+print(f"結論部:{C_q}")
 
-    Target_F3_system = ctrl.ControlSystem(rules=[Target_F3_rule1, Target_F3_rule2, Target_F3_rule3, Target_F3_rule4,
-                                                 Target_F3_rule5, Target_F3_rule6, Target_F3_rule7, Target_F3_rule8,
-                                                 Target_F3_rule9])
-    self.Target_F3_sim = ctrl.ControlSystemSimulation(Target_F3_system)
+CF_q = 2 * np.max(c, axis=1) - np.sum(c, axis=1)
+rules = rule_change(range(16), CF_q)
 
-    f_orientation_size4 = ctrl.Antecedent(np.arange(-91, 271, 1), 'f_orientation_size4')
-    f_orientation_size4['In Sights'] = fuzz.trimf(f_orientation_size4.universe, [-15, 0, 15])
-    f_orientation_size4['Close'] = fuzz.trimf(f_orientation_size4.universe, [15, 45, 75])
-    f_orientation_size4['Far'] = fuzz.trimf(f_orientation_size4.universe, [75, 180, 285])
-    # shortest_distance < 50 + (12 * clast_size) We may wanna change the hypotenuse membership functions
-    f_hypotenuse_size4 = ctrl.Antecedent(np.arange(0, self.roe_zone + 1, 1), 'f_hypotenuse_size4')
+pro = np.full((16, len(x_array)), -1.0)
+for i in range(16):
+    m = fit(x_array, i)
+    pro[i] = m * CF_q[i]
+R_w = np.argmax(pro, axis=0)
+fit_x = C_q[R_w]
+fit_x = np.count_nonzero(fit_x == x_array[:, 2]) / len(x_array)
+print(f"識別率:{fit_x}")
 
-    f_hypotenuse_size4['Imminent'] = fuzz.trimf(f_hypotenuse_size4.universe, [-80, 0, 80])
-    f_hypotenuse_size4['Close'] = fuzz.trimf(f_hypotenuse_size4.universe, [80, 140, 200])
-    f_hypotenuse_size4['Far'] = fuzz.trimf(f_hypotenuse_size4.universe, [140, 200, 260])
+for i in range(16):
+    print(f"集合{i + 1:2d} : {Ruledict[i]} then Class{C_q[i] + 1}")
+print(f"重み：\n{CF_q}")
+print(f"ルール数:{len(rules)}")
+print(f"総ルール長：{rule_count(rules, CF_q)}")
 
-    Target_F4 = ctrl.Consequent(np.arange(-26, 126, 1), 'Target_F4')
-    Target_F4['Very Low'] = fuzz.trimf(Target_F4.universe, [-25, 0, 25])
-    Target_F4['Low'] = fuzz.trimf(Target_F4.universe, [0, 25, 50])
-    Target_F4['Medium'] = fuzz.trimf(Target_F4.universe, [25, 50, 75])
-    Target_F4['High'] = fuzz.trimf(Target_F4.universe, [50, 75, 100])
-    Target_F4['Very High'] = fuzz.trimf(Target_F4.universe, [75, 100, 125])
+print(f"得られた識別器:")
+for rule in rules:
+    print(f"{Ruledict[rule]} then Class{C_q[rule] + 1}")
 
-    Target_F4_rule1 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Imminent'] & f_orientation_size4['In Sights']),
-                                consequent=Target_F4['Very High'], label='Target_F4_rule1')
 
-    Target_F4_rule2 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Close'] & f_orientation_size4['In Sights']),
-                                consequent=Target_F4['High'], label='Target_F4_rule2')
-
-    Target_F4_rule3 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Far'] & f_orientation_size4['In Sights']),
-                                consequent=Target_F4['Very Low'], label='Target_F4_rule3')
-
-    Target_F4_rule4 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Imminent'] & f_orientation_size4['Close']),
-                                consequent=Target_F4['High'], label='Target_F4_rule4')
-
-    Target_F4_rule5 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Close'] & f_orientation_size4['Close']),
-                                consequent=Target_F4['Medium'], label='Target_F4_rule5')
-
-    Target_F4_rule6 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Far'] & f_orientation_size4['Close']),
-                                consequent=Target_F4['Very Low'], label='Target_F4_rule6')
-
-    Target_F4_rule7 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Imminent'] & f_orientation_size4['Far']),
-                                consequent=Target_F4['High'], label='Target_F4_rule7')
-
-    Target_F4_rule8 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Close'] & f_orientation_size4['Far']),
-                                consequent=Target_F4['Low'], label='Target_F4_rule8')
-
-    Target_F4_rule9 = ctrl.Rule(antecedent=(f_hypotenuse_size4['Far'] & f_orientation_size4['Far']),
-                                consequent=Target_F4['Very Low'], label='Target_F4_rule9')
-
-    Target_F4_system = ctrl.ControlSystem(rules=[Target_F4_rule1, Target_F4_rule2, Target_F4_rule3, Target_F4_rule4,
-                                                 Target_F4_rule5, Target_F4_rule6, Target_F4_rule7, Target_F4_rule8,
-                                                 Target_F4_rule9])
-    self.Target_F4_sim = ctrl.ControlSystemSimulation(Target_F4_system)
+# グラフ描画
