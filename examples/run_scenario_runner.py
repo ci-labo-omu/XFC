@@ -1,6 +1,4 @@
-from src.kessler_game import Scenario, KesslerGame, GraphicsType
-
-
+from kesslergame import Scenario
 
 
 class FuzzyController1(ControllerBase):

@@ -1,8 +1,7 @@
 import time
 import random
 
-from src.kessler_game.controller import *
-from src.kessler_game.kessler_game import KesslerGame, Scenario
+from kesslergame import Scenario
 
 
 def timeout(input_data):

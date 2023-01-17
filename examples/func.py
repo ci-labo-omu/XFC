@@ -1,9 +1,7 @@
 #関数置き場
 import math
-from typing import Tuple, Dict, Any, List
-import random
-from src.kessler_game.controller import KesslerController
-from src.kessler_game.ship import Ship
+from typing import Tuple, Dict
+from kesslergame import Ship
 import numpy as np
 
 def aim(vx, vy, normal_astangle):

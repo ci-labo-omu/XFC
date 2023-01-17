@@ -1,5 +1,3 @@
-from src.fuzzy_asteroids.game import *
-
 if __name__ == "__main__":
     # Settings dictionary
     settings = {
