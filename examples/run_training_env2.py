@@ -100,7 +100,7 @@ if __name__ == "__main__":
         print(genes[first])
 
 
-        with open("run10_true.csv", "a", newline='') as f:
+        with open("results/run10_true.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)
 
