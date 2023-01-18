@@ -49,12 +49,20 @@ if __name__ == "__main__":
         return [team.accuracy for team in score.teams]
 
     def run10(gene):
+        score = [math.prod(running(gene)) for i in range(10)]
+        return np.average(score)
+    def run10worst(gene):
         min = 1.0
         for i in range(10):
             score = math.prod(running(gene))
             if min > score: min = score
         return min
-
+    def run10best(gene):
+        max = 0.0
+        for i in range(10):
+            score = math.prod(running(gene))
+            if max < score: max = score
+        return max
 
     def blend(x_a, x_b, alpha):
         u = []

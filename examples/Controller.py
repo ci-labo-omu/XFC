@@ -138,9 +138,9 @@ class NewController(KesslerController):
         angdiff_front = min(aalist, key=abs)
         angdiff = aalist[np.argmin(search_dist)]
         fire_bullet = abs(angdiff_front) < 10 and min(dist_list) < 300
-        ruru = self.mems(dist_closest,angdiff, self.center)
-        thrust = ruru[0]
-        turn_rate = ruru[1]*np.sign(angdiff)
+        rule = self.mems(dist_closest,angdiff, self.center)
+        thrust = rule[0]
+        turn_rate = rule[1]*np.sign(angdiff)
 
         # Team1がよける
         if len(input_data['ships']) >= 2 and ownship['id'] == 1:
