@@ -47,7 +47,7 @@ def cil_run():
                                               {"position": (700, 400), "angle": -10, "lives": 3, "team": 2},
                                               ],
                                  ammo_limit_multiplier=0.9)
-        controllers = [NewController([ 21.84442862, 28.04162967, 173.58962703, 101.0509877 ]), NewController([ 21.84442862, 28.04162967, 173.58962703, 101.0509877 ])]
+        controllers = [NewController([ 10.62959133,  57.23748011, 209.92867951,   0.71058604]), NewController([10.62959133,  57.23748011, 209.92867951,   0.71058604])]
 
         pre = time.perf_counter()
         score, perf_data = game.run(scenario=scenario_ship, controllers=controllers)
