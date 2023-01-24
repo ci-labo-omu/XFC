@@ -102,7 +102,7 @@ if __name__ == "__main__":
     accu = [run10(genes[j]) for j in range(len(genes))]
     print(accu)
 
-    with open("../results/run_hit_10env.csv", "a", newline='') as f:
+    with open("results/run_hit_10env.csv", "a", newline='') as f:
         for i in range(2500):
             gene_a, gene_b = tournament(genes, accu)
             child = blend(gene_a, gene_b, 0.5)

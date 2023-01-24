@@ -7,39 +7,39 @@ import numpy as np
 
 plt.rcParams["font.size"] = 14
 
-with open("examples/results/game10_hit_best.csv") as f:
+with open("examples/csexp2/results/game10_hit_best.csv") as f:
     reader = csv.reader(f)
     y1 = [np.max(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_ave.csv") as f:
+with open("examples/csexp2/results/game10_hit_ave.csv") as f:
     reader = csv.reader(f)
     y2 = [np.max(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_worst.csv") as f:
+with open("examples/csexp2/results/game10_hit_worst.csv") as f:
     reader = csv.reader(f)
     y3 = [np.max(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_best.csv") as f:
+with open("examples/csexp2/results/game10_hit_best.csv") as f:
     reader = csv.reader(f)
     y4 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_ave.csv") as f:
+with open("examples/csexp2/results/game10_hit_ave.csv") as f:
     reader = csv.reader(f)
     y5 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_worst.csv") as f:
+with open("examples/csexp2/results/game10_hit_worst.csv") as f:
     reader = csv.reader(f)
     y6 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_best.csv") as f:
+with open("examples/csexp2/results/game10_hit_best.csv") as f:
     reader = csv.reader(f)
     y7 = [np.average(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_ave.csv") as f:
+with open("examples/csexp2/results/game10_hit_ave.csv") as f:
     reader = csv.reader(f)
     y8 = [np.average(np.float_(row)) for row in reader]
 
-with open("examples/results/game10_hit_worst.csv") as f:
+with open("examples/csexp2/results/game10_hit_worst.csv") as f:
     reader = csv.reader(f)
     y9 = [np.average(np.float_(row)) for row in reader]
 
