@@ -1,5 +1,6 @@
 import math
 import random
+#from deap import base, creator
 from Controller import NewController
 from src.kesslergame import TrainerEnvironment
 from src.kesslergame import Scenario
@@ -8,52 +9,7 @@ import numpy as np
 import csv
 
 rng = np.random.default_rng()
-children = 1
-
-
-def run10(gene):
-    score = [running(gene, seed) for seed in range(10)]
-    return np.average(score)
-
-
-def run10worst(gene, seed):
-    min = 1.0
-    for i in range(10):
-        score = running(gene, seed)
-        if min > score: min = score
-    return min
-
-
-def run10best(gene, seed):
-    max = 0.0
-    for i in range(10):
-        score = running(gene, seed)
-        if max < score: max = score
-    return max
-
-
-def blend(x_a, x_b, alpha):
-    u = []
-    for i in range(4):
-        A = np.minimum(x_a[i], x_b[i]) - alpha * np.fabs(x_a[i] - x_b[i])
-        B = np.maximum(x_a[i], x_b[i]) + alpha * np.fabs(x_a[i] - x_b[i])
-        u.append(np.random.uniform(A, B))
-    # u = np.clip(u, x_min, x_max)
-    return u
-
-
-def tournament(_genes, _accu):
-    a, b, d, e, f, g = rng.choice(len(_genes), 6, replace=False)
-    if _accu[d] < _accu[e]:
-        gene_a = genes[d]
-    else:
-        gene_a = genes[e]
-    if _accu[f] < _accu[g]:
-        gene_b = genes[f]
-    else:
-        gene_b = genes[g]
-    return gene_a, gene_b
-
+child = 1
 
 
 if __name__ == "__main__":
@@ -68,7 +24,7 @@ if __name__ == "__main__":
         # "prints": True,
         "allow_key_presses": False
     }
-    def running(gene, seed):
+    def running(gene):
         #creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         #creator.create("Individual", list, fitness=creator.FitnessMax)
         game = TrainerEnvironment(settings=settings)
@@ -77,8 +33,7 @@ if __name__ == "__main__":
                  ship_states=[{"position": (300, 400), "angle": 0, "lives": 3, "team": 1},
                               {"position": (700, 400), "angle": 0, "lives": 3, "team": 2},
                               ],
-                 ammo_limit_multiplier=1.0,
-                            seed=seed)
+                 ammo_limit_multiplier=1.0)
         # Because of how the arcade library is implemented, there are memory leaks for instantiating the environment
         # too many times, keep instantiations to a small number and simply reuse the environment
         controllers = [NewController(gene), NewController(gene)]
@@ -91,35 +46,61 @@ if __name__ == "__main__":
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))"""
 
-        return math.prod([team.accuracy for team in score.teams])
+        return [team.accuracy for team in score.teams]
 
+    def run10(gene):
+        max = 0.0
+        for i in range(10):
+            score = math.prod(running(gene))
+            if max < score: max = score
+        return max
+
+
+    def blend(x_a, x_b, alpha):
+        u = []
+        for i in range(4):
+            A = np.minimum(x_a[i], x_b[i]) - alpha * np.fabs(x_a[i] - x_b[i])
+            B = np.maximum(x_a[i], x_b[i]) + alpha * np.fabs(x_a[i] - x_b[i])
+            u.append(np.random.uniform(A, B))
+        #u = np.clip(u, x_min, x_max)
+        return u
+
+
+    def tournament(_genes, _accu):
+        a, b, d, e, f, g = rng.choice(len(_genes), 6, replace=False)
+        if _accu[d] < _accu[e]:
+            gene_a = genes[d]
+        else:
+            gene_a = genes[e]
+        if _accu[f] < _accu[g]:
+            gene_b = genes[f]
+        else:
+            gene_b = genes[g]
+        return gene_a, gene_b
 
 
     standard = np.array([0, 100, 200, 90])
     genes = np.tile(standard, (10, 1))
     genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10])+genes
-    accu = np.zeros(10)
-    accu = np.array([run10(genes[j]) for j in range(len(genes))])
-    accu /= 10
-    print(accu)
+    ave_list = []
+    print(run10(genes[0]))
+    accu = [run10(genes[j]) for j in range(len(genes))]
 
-    with open("results/new5.csv", "a", newline='') as f:
-        for i in range(500):
-            gene_a, gene_b = tournament(genes, accu)
-            child = blend(gene_a, gene_b, 0.5)
-            run10_child = run10(child)
-            if run10_child > np.min(accu):
-                genes[np.argmin(accu)] = child
-                accu[np.argmin(accu)] = run10_child
+    for i in range(500):
 
-            first = np.argmax(accu)
-            print(i)
+        gene_a, gene_b = tournament(genes, accu)
+        children = blend(gene_a, gene_b, 0.5)
+        if run10(children) > np.min(accu):
+            genes[np.argmin(accu)] = children
+        accu = [run10(genes[j]) for j in range(len(genes))]
 
-            print(genes[first])
-            print(max(accu))
+        first = np.argmax(accu)
+        print(i)
+
+        print(genes[first])
 
 
-
+        with open("../results/run10_true.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)
 

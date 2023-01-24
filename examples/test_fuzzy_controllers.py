@@ -1,7 +1,7 @@
 import time
 import random
-
-from kesslergame import Scenario
+from typing import Dict, Tuple
+from src.kesslergame import Scenario, KesslerController, Ship
 
 
 def timeout(input_data):

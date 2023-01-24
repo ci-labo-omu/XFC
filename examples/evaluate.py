@@ -24,12 +24,13 @@ if __name__ == "__main__":
         # "prints": True,
         "allow_key_presses": False
     }
-    def running(gene):
+
+    def running(gene, rand):
         #creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         #creator.create("Individual", list, fitness=creator.FitnessMax)
         game = TrainerEnvironment(settings=settings)
         scenario = Scenario(name="Multi-Ship",
-                 num_asteroids=5,
+                 num_asteroids=rand,
                  ship_states=[{"position": (300, 400), "angle": 0, "lives": 3, "team": 1},
                               {"position": (700, 400), "angle": 0, "lives": 3, "team": 2},
                               ],
@@ -54,13 +55,20 @@ if __name__ == "__main__":
 
 
 
+    #simple1
+    #gene = [7.76711477e-02, 3.92488857e+01, 2.26744742e+02, 1.03120448e+02]
+    #simple5
+    gene = [-17.21466721,  61.88116424, 174.37963555,  94.87146695]
+    #simple100env_1
+    #gene = [ -6.03595681,  59.09804168 179.83703166  88.50611241]
+    #simple100env_5
+    #gene = [-24.42916563,  62.61450636, 180.93782134,  81.10558]
 
-    gene = [ 32.92848356,  59.22781508, 156.82185557  ,95.49670559]
-
-    scores = [0.0 for i in range(500)]
+    scores = [0.0 for i in range(1000)]
     sum1 = 0.0
-    for i in range(500):
-        score = running(gene)
+    for i in range(1000):
+        rand = np.random.randint(5, 10)
+        score = running(gene,rand)
         print(i)
         print(score)
         scores[i] = score
@@ -68,11 +76,4 @@ if __name__ == "__main__":
     std = np.std(scores)
     print("平均:",ave)
     print("標準偏差:",std)
-
-
-
-
-
-#iwakutukinosaiakusentaku
-#平均: 0.5115938999572495  標準偏差: 0.10157157874592687
 
