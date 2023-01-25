@@ -1,13 +1,9 @@
 import math
 from typing import Tuple, Dict
-import random
 from kesslergame import KesslerController
 import numpy as np
-import skfuzzy as fuzz
-import skfuzzy.control as ctrl
 from func import angle360
 from kesslergame import Ship
-
 
 class NewController(KesslerController):
     """
@@ -99,29 +95,18 @@ class NewController(KesslerController):
 
 
 
+
     def actions(self, ownship: Ship, input_data: Dict[str, Tuple]) -> Tuple[float, float, bool]:
         # timeout(input_data)
-        #ship_list = input_data["ships"]
+
+        #隕石と機体の位置関係のセクション
         ast_list = input_data["asteroids"]
         dist_list = np.array([math.dist(ownship['position'], ast['position']) for ast in ast_list])
         closest = np.argmin(dist_list)
         dist_closest = dist_list[closest]
-
-
-
-
-
-
-
-        #fire_bullet = abs(angdiff) < 10.0
-
-
-        # print(ast_angle(self, ownship['position'], ast_list[closest]['position']))
-
-
-
-        #search_list = [ast_list[num] for num in np.where(np.array(dist_list) < search_range)[0]]
-        #search_dist = [dist for dist in dist_list if dist < search_range]
+        sidefromcenter = 500 - ownship['position'][0]
+        below_center = ownship['position'][1]
+        print(sidefromcenter, below_center)
         sorteddict = sorted(ast_list, key=lambda x:math.dist(ownship['position'], x['position']))
         search_list = sorteddict[0:5]
         search_dist = np.array([math.dist(ownship['position'], ast['position']) for ast in search_list])

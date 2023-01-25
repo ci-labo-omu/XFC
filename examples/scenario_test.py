@@ -6,7 +6,7 @@
 import time
 
 from kesslergame import Scenario, KesslerGame, GraphicsType
-from Controller import NewController
+from FreshController import NewController
 
 
 my_test_scenario = Scenario(name='Test Scenario',
