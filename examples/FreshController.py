@@ -93,21 +93,38 @@ class NewController(KesslerController):
             return out
         self.mems = mems
 
+        center_x = 500
+        center_y = 400
 
 
 
     def actions(self, ownship: Ship, input_data: Dict[str, Tuple]) -> Tuple[float, float, bool]:
         # timeout(input_data)
-
         #隕石と機体の位置関係のセクション
-        ast_list = input_data["asteroids"]
-        dist_list = np.array([math.dist(ownship['position'], ast['position']) for ast in ast_list])
-        closest = np.argmin(dist_list)
-        dist_closest = dist_list[closest]
+        ast_list = np.array(input_data["asteroids"])
+        dist_xylist = [np.array(ownship['position']) - np.array(ast['position']) for ast in ast_list]
+        dist_avoidlist = dist_xylist.copy()
+        dist_list1 = [math.sqrt(xy[0]**2 + xy[1]**2) for xy in dist_xylist]
+        closest = np.argmin(dist_list1)
+        dist_closest1 = dist_list1[closest]
+        #よける部分に関しては画面端のことを考える，弾丸はすり抜けないから狙撃に関しては考えない
         sidefromcenter = 500 - ownship['position'][0]
-        below_center = ownship['position'][1]
-        print(sidefromcenter, below_center)
-        sorteddict = sorted(ast_list, key=lambda x:math.dist(ownship['position'], x['position']))
+        below_center = 400 - ownship['position'][1]
+        for xy in dist_avoidlist:
+            if xy[0] > 500:
+                xy[0] -= 1000
+            elif xy[0] < -500:
+                xy[0] += 1000
+            if xy[1] > 400:
+                xy[1] -= 800
+            elif xy[1] < -400:
+                xy[1] += 800
+        dist_avoidlist = [math.sqrt(xy[0]**2 + xy[1]**2) for xy in dist_avoidlist]
+
+
+
+        sorted2_idx = np.argsort(dist_avoidlist)
+        sorteddict = ast_list[sorted2_idx]
         search_list = sorteddict[0:5]
         search_dist = np.array([math.dist(ownship['position'], ast['position']) for ast in search_list])
         near_angle = [np.array(ast['position']) - np.array(ownship['position']) for ast in search_list]
@@ -122,8 +139,8 @@ class NewController(KesslerController):
 
         angdiff_front = min(aalist, key=abs)
         angdiff = aalist[np.argmin(search_dist)]
-        fire_bullet = abs(angdiff_front) < 10 and min(dist_list) < 300
-        rule = self.mems(dist_closest,angdiff, self.center)
+        fire_bullet = abs(angdiff_front) < 10 and min(dist_list1) < 300
+        rule = self.mems(dist_closest1,angdiff, self.center)
         thrust = rule[0]
         turn_rate = rule[1]*np.sign(angdiff)
 
