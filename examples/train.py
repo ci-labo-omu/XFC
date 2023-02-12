@@ -1,10 +1,9 @@
 import math
 import random
-#from deap import base, creator
-from Controller import NewController
-from src.kesslergame import TrainerEnvironment
+from FreshController import NewController
+from src.kesslergame import TrainerEnvironment, KesslerController
 from src.kesslergame import Scenario
-import time
+from Scenarios import *
 import numpy as np
 import csv
 
@@ -27,34 +26,40 @@ if __name__ == "__main__":
     def running(gene):
         #creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         #creator.create("Individual", list, fitness=creator.FitnessMax)
-        game = TrainerEnvironment(settings=settings)
-        scenario = Scenario(name="Multi-Ship",
-                 num_asteroids=5,
-                 ship_states=[{"position": (300, 400), "angle": 0, "lives": 3, "team": 1},
-                              {"position": (700, 400), "angle": 0, "lives": 3, "team": 2},
-                              ],
-                 ammo_limit_multiplier=1.0)
+        game = TrainerEnvironment()
         # Because of how the arcade library is implemented, there are memory leaks for instantiating the environment
         # too many times, keep instantiations to a small number and simply reuse the environment
         controllers = [NewController(gene), NewController(gene)]
-        score , perf_data= game.run(controllers=controllers, scenario=scenario)
+        score , perf_data= game.run(scenario=scenario2, controllers=controllers )
 
         """print('Scenario eval time: ' + str(time.perf_counter() - pre))
         print(score.stop_reason)
         print('Asteroids hit: ' + str([team.asteroids_hit for team in score.teams]))
         print('Deaths: ' + str([team.deaths for team in score.teams]))
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
+        print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))"""
 
-        return [team.accuracy for team in score.teams]
+        return sum([team.asteroids_hit for team in score.teams])
+
 
     def run10(gene):
-        max = 0.0
+        score = [running(gene) for i in range(10)]
+        return np.average(score)
+
+    def run10worst(gene):
+        min = 240
         for i in range(10):
-            score = math.prod(running(gene))
+            score = running(gene)
+            if min > score: min = score
+        return min
+
+    def run10best(gene):
+        max = 0
+        for i in range(10):
+            score = running(gene)
             if max < score: max = score
         return max
-
 
     def blend(x_a, x_b, alpha):
         u = []
@@ -83,24 +88,25 @@ if __name__ == "__main__":
     genes = np.tile(standard, (10, 1))
     genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10])+genes
     ave_list = []
-    print(run10(genes[0]))
-    accu = [run10(genes[j]) for j in range(len(genes))]
+    print(running(genes[0]))
+    accu = [running(genes[j]) for j in range(len(genes))]
 
     for i in range(500):
 
         gene_a, gene_b = tournament(genes, accu)
-        children = blend(gene_a, gene_b, 0.5)
-        if run10(children) > np.min(accu):
+        children = blend(gene_a, gene_b, 1.0)
+        score_child = running(children)
+        if score_child > np.min(accu):
             genes[np.argmin(accu)] = children
-        accu = [run10(genes[j]) for j in range(len(genes))]
+            accu[np.argmin(accu)] = score_child
 
         first = np.argmax(accu)
         print(i)
-
+        print(first)
         print(genes[first])
 
 
-        with open("../results/run10_true.csv", "a", newline='') as f:
+        with open("scenario2_.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)
 

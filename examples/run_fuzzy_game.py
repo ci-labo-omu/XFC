@@ -53,6 +53,7 @@ def cil_run():
         run10_hit_env_child5 = [ 16.83714325,  34.80430902, 188.32179048,  86.97881193]
         run10_hit_env_child1 = [ 13.94107016,  53.73100038, 235.7052832,  101.09256617]
         run10_hit_best = [-6.73947456,  31.06759868, 170.07489844, 110.53856904]
+        run_scenario3 = [ 15.91937739, 124.51044774, 212.49390247,  85.28896866]
         base = [0, 100, 200, 90]
 
         controllers = [NewController(run10_hit_env_child5), NewController(run10_hit_env_child5)]
