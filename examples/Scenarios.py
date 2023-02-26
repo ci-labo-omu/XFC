@@ -3,6 +3,8 @@ import random
 from kesslergame import KesslerController, TrainerEnvironment
 from kesslergame import Scenario, KesslerGame, GraphicsType
 from FreshController import NewController
+from scenarios_official import *
+from FreshController2 import NewController2
 
 #隕石が2機体を囲むように，円状に並んで静止する
 scenario1 = Scenario(name='Test Scenario',
@@ -22,7 +24,7 @@ scenario1 = Scenario(name='Test Scenario',
                                 {'position': (500, 400), 'angle': 90, 'lives':5, 'team': 2},
                             ],
                             map_size=(1000, 800),
-                            #time_limit=60,
+                            time_limit=60,
                             ammo_limit_multiplier=0,
                             stop_if_no_ammo=False)
 #隕石が縦に並び，横向きに流れる
@@ -114,29 +116,33 @@ class FuzzyController(ControllerBase):
 def cil_run():
     if __name__ == "__main__":
         # Available settings
-        settings = {
-            "frequency": 60,
-            "real_time_multiplier": 2,
-            "graphics_on": True,
-            "sound_on": True,
-            "prints": True,
-            "full_dashboard": True
-        }
+        game_settings = {'perf_tracker': True,
+                         'graphics_mode': GraphicsType.Tkinter,
+                         'realtime_multiplier': 1}
 
         # Instantiate an instance of FuzzyAsteroidGame
-        game = KesslerGame()
+        game = KesslerGame(settings=game_settings)
 
-        scenario_ship = scenario2
-
+        scenario_ship = scenario3
         run10_hit_env_child5 = [ 16.83714325,  34.80430902, 188.32179048,  86.97881193]
         run10_hit_env_child1 = [ 13.94107016,  53.73100038, 235.7052832,  101.09256617]
         run10_hit_best = [-6.73947456,  31.06759868, 170.07489844, 110.53856904]
         base = [0, 100, 200, 90]
-        run_run_run_best = [ 11.04113667, 100.7399489,  180.64240626,  77.76295358]
-        run_run_run_worst = [-18.71020633, 105.96800855, 204.54813249,  85.52341368]
+        train_both_best = [ 14.0575167,  126.53980694, 173.8329372,   85.8197373 ]
+        train_both_out = [-471.40500295, -393.36724752,   80.78269604, -394.46713071,  -94.65366519,
+  145.60176213,  104.763696  ,   84.08122696,  -34.68533779,   86.22654228,
+  145.54315815,  150.49783484,  120.49715349,  134.90680705,  125.91555583,
+  121.16169725,  132.32261205,  127.56778426]
         run_scenario2 = [-13.72084507,  82.02768699, 194.21582298,  67.33765658]
         run_scenario2_alpha1 = [ 11.0739878,   67.15342541, 143.03935401,  69.42809256]
-        controllers = [NewController(run_scenario2), NewController(run_scenario2)]
+        run_scenario3 = [-69.35648117 , 78.38392824, 243.45673183,  35.80583847]
+        gene_standard = [-480, -360, 120, -360, -60, 180, 120, 120, 0, 90, 180, 180, 180, 180, 180, 180, 180, 180]
+        out_run_scenario3 = [-476.26230498, -374.16227015,   91.14998438, -339.49869418,  -65.13170907,
+  188.37775874,  102.19974504,  111.27493103,  -30.16147097,   85.87972781,
+  139.16449379,  147.9620688 ,  160.80626404,  161.90306892,  167.57717483,
+  149.0889584 ,  172.93617503,  177.46649927,]
+        official = [ 16.95719695,  37.1543788,  172.7201554,  105.07226885]
+        controllers = [NewController(run_scenario3, out_run_scenario3), NewController(run_scenario3, out_run_scenario3)]
 
         pre = time.perf_counter()
         score, perf_data = game.run(scenario=scenario_ship, controllers=controllers)
