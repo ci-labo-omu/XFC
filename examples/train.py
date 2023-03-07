@@ -100,7 +100,7 @@ if __name__ == "__main__":
     for i in range(2500):
 
         gene_a, gene_b = tournament(genes, accu)
-        children = blend(gene_a, gene_b, 1.0)
+        children = blend(gene_a, gene_b, 0.5)
         if children[0] > children[1] or children[1] > children[2]:
             i -= 1
             continue

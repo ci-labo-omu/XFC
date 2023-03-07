@@ -116,11 +116,12 @@ class NewController2(KesslerController):
             # out = ((rule0 * out0) + (rule1 * out1) + (rule2 * out2) + (rule3 * out3) + (rule4 * out4) + (
             #         rule5 * out5) + (rule6 * out6) + (
             #                rule7 * out7) + (rule8 * out8))
-            output = np.array([0, 0])
+            output = np.array([0.0, 0.0])
+            print(sum(rules))
             for i in range(len(out)):
                 output += out[i] * rules[i]
-            output = rules * out
             return output
+
 
         self.mems = mems
 
@@ -173,7 +174,7 @@ class NewController2(KesslerController):
         angdiff = aalist[np.argmin(search_dist)]
         fire_bullet = abs(angdiff_front) < 10 and min(dist_list1) < 400
         avoidance = np.min(dist_avoidlist)
-        avoid_speed = ast_list[np.argmin(dist_avoidlist)]['speed']
+        avoid_speed = np.linalg.norm(ast_list[np.argmin(dist_avoidlist)]['velocity'])
         """if len(input_data['ships']) >= 2:
             dist = math.dist(ownship['position'], input_data['ships'][1-ownship['id']]['position'])
             if dist < 20:

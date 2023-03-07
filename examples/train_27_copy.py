@@ -73,23 +73,23 @@ if __name__ == "__main__":
         return gene_a, gene_b
 
 
-    # standard = np.array([0, 100, 200, 90])
-    # genes = np.tile(standard, (10, 1))
-    # genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10]) + genes
-    output_standard = np.array(
-        [-450, -360, 120, -360, -60, 180, 120, 120, 0, 90, 160, 160, 140, 140, 140, 140, 140, 140])
+    speeds = np.arange(-450, 450, 100/3)
+    angles = np.arange(0, 180, 20/3)
+    output_standard = np.r_[speeds, angles]
+    speed_shake = np.full(27,20)
+    angle_shake = np.full(27, 10)
+    output_shake =np.r_[speed_shake, angle_shake]
+
     new_genes = np.tile(output_standard, (10, 1))  # 縦に，standardを積み重ねる
-    out_run_scenario3 = [-476.26230498, -374.16227015, 91.14998438, -339.49869418, -65.13170907,
-                         188.37775874, 102.19974504, 111.27493103, -30.16147097, 85.87972781,
-                         139.16449379, 147.9620688, 160.80626404, 161.90306892, 167.57717483,
-                         149.0889584, 172.93617503, 177.46649927, ]
-    # 前9要素が前後の推力，後9要素が角速度の絶対値
-    new_genes = (2 * (np.random.rand(10, 18) - 1)) * np.array([20, 20, 20, 20, 20, 20, 20, 20, 20, 10, 10, 10, 10,
-                                                               10, 10, 10, 10, 10]) + new_genes
-    gene = [-6.73947456,  31.06759868, 170.07489844, 110.53856904]  # Best in CSEXP
-    standard = np.array([0, 100, 200, 90])
+    out_27 = np.array([0, 90])
+    out_27 = np.tile(out_27, (10, 1))
+    ss = np.tile(np.array([20, 10]), (10, 1))
+    # 前27要素が前後の推力，後27要素が角速度の絶対値
+    new_genes = (2 * (np.random.rand(10, 54) - 1)) * output_shake + new_genes
+    gene = [-6.73947456,  31.06759868, 170.07489844, 110.53856904, 0, 100, 200]  # Best in CSEXP
+    #スピードの三要素をほぼほぼ追加できた，あとはFreShController2の方，スピードを取り出す関数を作る
     genes = np.tile(gene, (10, 1))
-    genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10]) + genes
+    genes = (2 * np.random.rand(10, 7) - 1) * np.array([30, 30, 30, 10, 50, 50, 50]) + genes
 
     accu = [run_out_lists(gene, new_genes[j]) for j in range(len(new_genes))]
     first = np.argmax(accu)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     outgene_first = new_genes[first]
     gene_first = genes[first]
 
-    for i in range(3000):
+    for i in range(2000):
         if i%2: # 偶数回目，出力の方の子個体生成
             gene_a, gene_b = tournament(new_genes, accu)
             children = blend(gene_a, gene_b, 0.5)
@@ -122,6 +122,6 @@ if __name__ == "__main__":
         print(i+1)
         print(outgene_first)
         print(gene_first)
-        with open("Official_both_reported.csv", "a", newline='') as f:
+        with open("both_27_2.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)

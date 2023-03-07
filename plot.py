@@ -7,64 +7,65 @@ import numpy as np
 
 plt.rcParams["font.size"] = 14
 
-with open("examples/csexp2/results/game10_hit_best.csv") as f:
+with open("Officials.csv") as f:
     reader = csv.reader(f)
     y1 = [np.max(np.float_(row)) for row in reader]
-
-with open("examples/csexp2/results/game10_hit_ave.csv") as f:
+    x1 = np.arange(1, len(y1)+1, 1)
+with open("Official_both.csv") as f:
     reader = csv.reader(f)
     y2 = [np.max(np.float_(row)) for row in reader]
-
-with open("examples/csexp2/results/game10_hit_worst.csv") as f:
+    x2 = np.arange(1, len(y2)+1, 1)
+with open("Official_out.csv") as f:
     reader = csv.reader(f)
     y3 = [np.max(np.float_(row)) for row in reader]
-
-with open("examples/csexp2/results/game10_hit_best.csv") as f:
+    x3 = np.arange(1, len(y3)+1, 1)
+with open("Officials.csv") as f:
     reader = csv.reader(f)
     y4 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/csexp2/results/game10_hit_ave.csv") as f:
+with open("Official_both.csv") as f:
     reader = csv.reader(f)
     y5 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/csexp2/results/game10_hit_worst.csv") as f:
+with open("Official_out.csv") as f:
     reader = csv.reader(f)
     y6 = [np.min(np.float_(row)) for row in reader]
 
-with open("examples/csexp2/results/game10_hit_best.csv") as f:
+with open("Officials.csv") as f:
     reader = csv.reader(f)
     y7 = [np.average(np.float_(row)) for row in reader]
 
-with open("examples/csexp2/results/game10_hit_ave.csv") as f:
+with open("Official_both.csv") as f:
     reader = csv.reader(f)
     y8 = [np.average(np.float_(row)) for row in reader]
 
-with open("examples/csexp2/results/game10_hit_worst.csv") as f:
+with open("Official_out.csv") as f:
     reader = csv.reader(f)
     y9 = [np.average(np.float_(row)) for row in reader]
 
 
+print(x1)
+print(y1)
 
 
-x = np.arange(1, len(y1) + 1, 1)
-plt.xlim(0, 2501)
-plt.ylim(60, 180.1)
+plt.xlim(0, len(x3))
+plt.ylim(80, 185.1)
 plt.rcParams["font.size"] = 16
 
-plt.plot(x, y1, color='b')
-plt.plot(x, y2,  color='r')
-plt.plot(x, y3, color='g')
-plt.plot(x, y4, color='b')
-plt.plot(x, y5,  color='r')
-plt.plot(x, y6,  color='g')
-plt.plot(x, y7, label="Average of Best score select", color='orchid')
-plt.plot(x, y8, label="Average of Average score select", color='black')
-plt.plot(x, y9, label="Average of Worst score select", color='orange')
+plt.plot(x1, y1, color='b')
+plt.plot(x2, y2,  color='r')
+plt.plot(x3, y3, color='g')
+plt.plot(x1, y4, color='b')
+plt.plot(x2, y5,  color='r')
+plt.plot(x3, y6,  color='g')
+plt.plot(x1, y7, label="MF", color='orchid')
+plt.plot(x2, y8, label="Both", color='black')
+plt.plot(x3, y9, label="Output", color='orange')
 
 #pylab.subplots_adjust(right=0.7)
-plt.fill_between(x, y1, y4, color="lightblue", alpha=0.5)
-plt.fill_between(x, y2, y5, color="lightsalmon", alpha=0.5)
-plt.fill_between(x, y3, y6, color="lightgreen", alpha=0.5)
+plt.fill_between(x1, y1, y4, color="lightblue", alpha=0.5)
+plt.fill_between(x2, y2, y5, color="lightsalmon", alpha=0.5)
+plt.fill_between(x3, y3, y6, color="lightgreen", alpha=0.5)
 plt.title("ランダムな環境での評価値の範囲の推移" ,y=-0.30,fontname="MS Gothic")
 plt.xlabel("評価回数",fontname="MS Gothic")
 plt.ylabel("評価値",fontname="MS Gothic")

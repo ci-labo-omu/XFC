@@ -98,7 +98,7 @@ if __name__ == "__main__":
     gene_first = genes[first]
 
     for i in range(3000):
-        if i%2: # 偶数回目，出力の方の子個体生成
+        if i%5 == 0: #5回に1回出力進化
             gene_a, gene_b = tournament(new_genes, accu)
             children = blend(gene_a, gene_b, 0.5)
             score_child = run_out_lists(gene_first, children) # メンバシップ関数には現在の最良のものを使う
@@ -122,6 +122,6 @@ if __name__ == "__main__":
         print(i+1)
         print(outgene_first)
         print(gene_first)
-        with open("Official_both_reported.csv", "a", newline='') as f:
+        with open("Official_both5skip.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)

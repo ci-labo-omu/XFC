@@ -6,10 +6,12 @@ from src.kesslergame import Scenario
 from Scenarios import *
 import numpy as np
 import csv
+
 # メンバシップ関数と出力を両方進化させる
 # メンバシップ関数変更ｰ>評価ｰ>出力ｰ>評価で1世代
 rng = np.random.default_rng()
 child = 1
+pm = 1/54
 
 if __name__ == "__main__":
     # Instantiate an instance of TrainerEnvironment.
@@ -31,7 +33,7 @@ if __name__ == "__main__":
         game = TrainerEnvironment()
         # Because of how the arcade library is implemented, there are memory leaks for instantiating the environment
         # too many times, keep instantiations to a small number and simply reuse the environment
-        controllers = [NewController(gene, genes2), NewController(gene, genes2)]
+        controllers = [NewController2(gene, genes2), NewController2(gene, genes2)]
         score, perf_data = game.run(scenario=scenario, controllers=controllers)
 
         """print('Scenario eval time: ' + str(time.perf_counter() - pre))
@@ -60,6 +62,13 @@ if __name__ == "__main__":
         return u
 
 
+    def real_mutation(u):
+        p = np.random.rand(len(u))
+        p = p <= pm
+        u[p] (2 * np.random.rand(10, 7) - 1) * np.array([30, 30, 30, 10, 50, 50, 50]) + u[p]
+        return u
+
+
     def tournament(_genes, _accu):
         d, e, f, g = rng.choice(len(_genes), 4, replace=False)
         if _accu[d] > _accu[e]:
@@ -73,23 +82,36 @@ if __name__ == "__main__":
         return gene_a, gene_b
 
 
-    # standard = np.array([0, 100, 200, 90])
-    # genes = np.tile(standard, (10, 1))
-    # genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10]) + genes
-    output_standard = np.array(
-        [-450, -360, 120, -360, -60, 180, 120, 120, 0, 90, 160, 160, 140, 140, 140, 140, 140, 140])
-    new_genes = np.tile(output_standard, (10, 1))  # 縦に，standardを積み重ねる
-    out_run_scenario3 = [-476.26230498, -374.16227015, 91.14998438, -339.49869418, -65.13170907,
-                         188.37775874, 102.19974504, 111.27493103, -30.16147097, 85.87972781,
-                         139.16449379, 147.9620688, 160.80626404, 161.90306892, 167.57717483,
-                         149.0889584, 172.93617503, 177.46649927, ]
-    # 前9要素が前後の推力，後9要素が角速度の絶対値
-    new_genes = (2 * (np.random.rand(10, 18) - 1)) * np.array([20, 20, 20, 20, 20, 20, 20, 20, 20, 10, 10, 10, 10,
-                                                               10, 10, 10, 10, 10]) + new_genes
-    gene = [-6.73947456,  31.06759868, 170.07489844, 110.53856904]  # Best in CSEXP
-    standard = np.array([0, 100, 200, 90])
+    speeds = np.arange(-450, 450, 100 / 3)
+    angles = np.arange(0, 180, 20 / 3)
+    output_standard = np.r_[speeds, angles]
+    speed_shake = np.full(27, 20)
+    angle_shake = np.full(27, 10)
+    output_shake = np.r_[speed_shake, angle_shake]
+
+    # new_genes = np.tile(output_standard, (10, 1))  # 縦に，standardを積み重ねる
+    out_27 = np.array([0, 90])
+    out_27 = np.tile(out_27, (10, 1))
+    ss = np.tile(np.array([20, 10]), (10, 1))
+    # 前27要素が前後の推力，後27要素が角速度の絶対値
+    mod_new_genes = np.array([-461.79048699, -411.80490733, -403.21941771, -367.36119148, -326.08121004,
+                     -314.47899696, -262.25148176, -236.41099967, -199.9587384, -168.34704605,
+                     -138.48811604, -103.80482541, -92.25424265, -19.2606112, 2.48975399,
+                     18.45341191, 56.47548647, 80.31332275, 137.77944239, 139.84951113,
+                     203.92632044, 230.02538834, 257.93673747, 292.96312339, 338.59216717,
+                     349.37065486, 369.39961917, -15.4698586, -0.94523055, 5.00745265,
+                     6.79153201, 22.12231563, 25.79638824, 32.64151245, 41.00649518,
+                     41.25269494, 46.64794758, 59.18591287, 55.50019091, 81.79089422,
+                     71.7219728, 80.67820036, 84.57853013, 87.396528, 100.67884561,
+                     103.40142312, 116.31054855, 125.7682513, 128.92351688, 128.24002384,
+                     139.17607817, 158.04437515, 162.12156851, 168.49338955])
+    new_genes = (2 * (np.random.rand(10, 54) - 1)) * output_shake + mod_new_genes
+
+    gene = [10.77823972, 31.59573362, 194.69036187, 103.96850551, -20.75314633,
+            105.53213439, 125.61431108]  # Best in CSEXP, ここを改良した
+    # スピードの三要素をほぼほぼ追加できた，あとはFreShController2の方，スピードを取り出す関数を作る
     genes = np.tile(gene, (10, 1))
-    genes = (2 * np.random.rand(10, 4) - 1) * np.array([30, 30, 30, 10]) + genes
+    genes = (2 * np.random.rand(10, 7) - 1) * np.array([30, 30, 30, 10, 50, 50, 50]) + genes
 
     accu = [run_out_lists(gene, new_genes[j]) for j in range(len(new_genes))]
     first = np.argmax(accu)
@@ -97,31 +119,34 @@ if __name__ == "__main__":
     outgene_first = new_genes[first]
     gene_first = genes[first]
 
-    for i in range(3000):
-        if i%2: # 偶数回目，出力の方の子個体生成
+    for i in range(2000):
+        if i % 2:  # 偶数回目，出力の方の子個体生成
             gene_a, gene_b = tournament(new_genes, accu)
-            children = blend(gene_a, gene_b, 0.5)
-            score_child = run_out_lists(gene_first, children) # メンバシップ関数には現在の最良のものを使う
+            children_out = blend(gene_a, gene_b, 0.5)
+            score_child = run_out_lists(gene_first, children_out)  # メンバシップ関数には現在の最良のものを使う
             if score_child > np.min(accu):
-                new_genes[np.argmin(accu)] = children
+                new_genes[np.argmin(accu)] = children_out
                 accu[np.argmin(accu)] = score_child
-        else: # 奇数回目，メンバシップ関数の方の子個体生成
+        else:  # 奇数回目，メンバシップ関数の方の子個体生成
             gene_a, gene_b = tournament(genes, accu)
-            children = blend(gene_a, gene_b, 0.5)
+            children = blend(gene_a[4:7], gene_b[4:7], 0.5)
+            p = gene.copy()
+            p[4:7] = children
+            children = real_mutation(children)
             if children[0] > children[1] or children[1] > children[2]:
                 i -= 1
                 continue
-            score_child = run_out_lists(children, outgene_first)# 出力には現在の最良のものを使う
+            score_child = run_out_lists(p, outgene_first)  # 出力には現在の最良のものを使う
             if score_child > np.min(accu):
-                genes[np.argmin(accu)] = children
+                genes[np.argmin(accu)][4:7] = children
                 accu[np.argmin(accu)] = score_child
 
         first = np.argmax(accu)
         outgene_first = new_genes[first]
         gene_first = genes[first]
-        print(i+1)
+        print(i + 1)
         print(outgene_first)
         print(gene_first)
-        with open("Official_both_reported.csv", "a", newline='') as f:
+        with open("both_27_speed_only_modified.csv", "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(accu)
