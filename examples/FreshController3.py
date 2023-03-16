@@ -6,7 +6,7 @@ from func import angle360
 from kesslergame import Ship
 
 
-class NewController(KesslerController):
+class NewController3(KesslerController):
     """
          A ship controller class for Kessler. This can be inherited to create custom controllers that can be passed to the
         game to operate within scenarios. A valid controller contains an actions method that takes in a ship object and ass
@@ -18,19 +18,26 @@ class NewController(KesslerController):
         Create your fuzzy logic controllers and other objects here
         """
         # gene: [left, center, right, (angle)center]
-        left = gene[0]
-        center = gene[1]
-        right = gene[2]
-        center_angle = gene[3]
-
+        left1 = gene[0]
+        left2 = gene[1]
+        center = gene[2]
+        right2 = gene[3]
+        right1 = gene[4]
+        center_angle = gene[5]
         def membership1(x):
-            if x <= gene[1]:
-                return np.array([1.0 - (x - left) / (center - left), (x - left) / (center - left), 0.0])
-            elif x <= right:
-                return np.array([0.0, right / (right - center) - x / (right - center),
-                                 x / (right - center) - center / (right - center)])
+            if x <= left1:
+                return [1.0, 0.0, 0.0, 0.0, 0.0]
+            elif x <= left2:
+                return np.array([1.0 - (x - left1) / (left2 - left1), (x - left1) / (left2 - left1), 0.0, 0.0, 0.0])
+            elif x <= center:
+                return np.array([0.0, (center - x) / (center - left2),
+                                 (x - left2) / (center - left2), 0.0, 0.0])
+            elif x <= right2:
+                return np.array([0.0, 0.0, (right2 - x) / (right2 - center), (x - center) / (right2 - center), 0.0])
+            elif x <= right1:
+                return np.array([0.0, 0.0, 0.0, (right1 - x) / (right1 - right2), (x - right2) / (right1 - right2)])
             else:
-                return np.array([0.0, 0.0, 1.0])
+                return np.array([0.0, 0.0, 0.0, 0.0, 1.0])
 
         def membership2(angle):
             angle = abs(angle)
@@ -41,7 +48,6 @@ class NewController(KesslerController):
 
         self.membership1 = membership1
         self.membership2 = membership2
-        self.center = gene[1]
 
         def mems(x, angle):
             Rules = {
@@ -56,25 +62,32 @@ class NewController(KesslerController):
                 8: "x1 is far   and x2 is back",
             }
 
-            #out0 = np.array([-480, 90])
-            #out1 = np.array([-360, 180])
-            #out2 = np.array([120, 180])
-            #out3 = np.array([-360, 180])
-            #out4 = np.array([-60, 180])
-            #out5 = np.array([180, 180])
-            #out6 = np.array([120, 180])
-            #out7 = np.array([120, 180])
-            #out8 = np.array([0, 180])
+            # out0 = np.array([-480, 90])
+            # out1 = np.array([-360, 180])
+            # out2 = np.array([120, 180])
+            # out3 = np.array([-360, 180])
+            # out4 = np.array([-60, 180])
+            # out5 = np.array([180, 180])
+            # out6 = np.array([120, 180])
+            # out7 = np.array([120, 180])
+            # out8 = np.array([0, 180])
 
-            out0 = np.array([genes2[0], genes2[9]])
-            out1 = np.array([genes2[1], genes2[10]])
-            out2 = np.array([genes2[2], genes2[11]])
-            out3 = np.array([genes2[3], genes2[12]])
-            out4 = np.array([genes2[4], genes2[13]])
-            out5 = np.array([genes2[5], genes2[14]])
-            out6 = np.array([genes2[6], genes2[15]])
-            out7 = np.array([genes2[7], genes2[16]])
-            out8 = np.array([genes2[8], genes2[17]])
+            out0 = np.array([genes2[0], genes2[15]])
+            out1 = np.array([genes2[1], genes2[16]])
+            out2 = np.array([genes2[2], genes2[17]])
+            out3 = np.array([genes2[3], genes2[18]])
+            out4 = np.array([genes2[4], genes2[19]])
+            out5 = np.array([genes2[5], genes2[20]])
+            out6 = np.array([genes2[6], genes2[21]])
+            out7 = np.array([genes2[7], genes2[22]])
+            out8 = np.array([genes2[8], genes2[23]])
+            out9 = np.array([genes2[9], genes2[24]])
+            out10 = np.array([genes2[10], genes2[25]])
+            out11 = np.array([genes2[11], genes2[26]])
+            out12 = np.array([genes2[12], genes2[27]])
+            out13 = np.array([genes2[13], genes2[28]])
+            out14 = np.array([genes2[14], genes2[29]])
+
             k = membership1(x)
             p = membership2(angle)
 
@@ -87,9 +100,17 @@ class NewController(KesslerController):
             rule6 = k[2] * p[0]
             rule7 = k[2] * p[1]
             rule8 = k[2] * p[2]
+            rule9 = k[3] * p[0]
+            rule10 = k[3] * p[1]
+            rule11 = k[3] * p[2]
+            rule12 = k[4] * p[0]
+            rule13 = k[4] * p[1]
+            rule14 = k[4] * p[2]
+
             out = ((rule0 * out0) + (rule1 * out1) + (rule2 * out2) + (rule3 * out3) + (rule4 * out4) + (
                     rule5 * out5) + (rule6 * out6) + (
-                           rule7 * out7) + (rule8 * out8))
+                           rule7 * out7) + (rule8 * out8) + (rule9 * out9) + (rule10 * out10) + (rule11 * out11) + (
+                               rule12 * out12) + (rule13 * out13)+(rule14*out14))
             return out
 
         self.mems = mems
@@ -136,9 +157,6 @@ class NewController(KesslerController):
                 ang += 360
             aalist.append(ang)
 
-
-
-
         angdiff_front = min(aalist, key=abs)
         angdiff = aalist[np.argmin(search_dist)]
         fire_bullet = abs(angdiff_front) < 10 and min(dist_list1) < 400
@@ -167,4 +185,4 @@ class NewController(KesslerController):
 
     @property
     def name(self) -> str:
-        return "OMU-let's"
+        return "Optimized Genes"
