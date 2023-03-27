@@ -9,7 +9,7 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 
-# both evolve
+# both evolve 2 to 4 are same
 rng = np.random.default_rng()
 child = 1
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
 
     def feasible_out(individual2):
-        return abs(np.array(individual2[0:15]).any()) <= 1.0 and abs(np.array(individual2[16:30]).any()) <= 1.0
+        return abs(np.array(individual2[0:15]).any()) <= 480 and abs(np.array(individual2[16:30]).any()) <= 180
 
 
     # 制約適応度

@@ -9,7 +9,7 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 
-# 5to7 are same code
+# both evolve
 rng = np.random.default_rng()
 child = 1
 
@@ -43,11 +43,8 @@ if __name__ == "__main__":
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))"""
-        print(sum([team.deaths for team in score.teams]))
         f1 = np.average([team.accuracy for team in score.teams])
-        f2 = 1 / score.sim_time if sum([team.deaths for team in score.teams]) < 3 else 1 - 1 / score.sim_time
-        print(f1)
-        print(f2)
+        f2 = 1 - score.sim_time / 120 if sum([team.deaths for team in score.teams]) < 3 else score.sim_time / 120
         return f1, f2
 
 
@@ -73,11 +70,11 @@ if __name__ == "__main__":
 
     def feasible(individual1):
         x1, x2, x3, x4, x5, x6 = individual1
-        return x1 < x2 < x3 < x4 < x5 and -200 < x1 < 1200 and -200 < x2 < 1200 and -200 < x3 < 1200 and -200 < x4 < 1200 and -200 < x5 < 1200 and 0 <= x6 <= 180
+        return x1 < x2 < x3 < x4 < x5 and -0.2 < x1 < 1.0 and -0.2 < x2 < 1.0 and -0.2 < x3 < 1.0 and -0.2 < x4 < 1.0 and -0.2 < x5 < 1.0 and 0 <= x6 <= 1.0
 
 
     def feasible_out(individual2):
-        return abs(np.array(individual2[0:15]).any()) <= 480 and abs(np.array(individual2[16:30]).any()) <= 180
+        return abs(np.array(individual2[0:15]).any()) <= 1.0 and abs(np.array(individual2[16:30]).any()) <= 1.0
 
 
     # 制約適応度
@@ -105,7 +102,6 @@ if __name__ == "__main__":
     creator.create("Individual1", list, fitness=creator.FitnessMax)
     creator.create("Individual2", list, fitness=creator.FitnessMax)
     toolbox = base.Toolbox()
-    MIN, MAX = -200, 1000
     dim = 6
     toolbox.register("attr_float", random.uniform, -0.2, 1.0)
     toolbox.register("attr_angle", random.uniform, 0, 1.0)
@@ -229,9 +225,8 @@ if __name__ == "__main__":
             record = stats.compile(pop1)
             logbook.record(gen=gen, evals=len(invalid_ind1), **record)
             print(logbook.stream)
-            bestt = tools.selBest(pop1, k=5)
-            best = bestt[0]
-            print(f"Generation {gen}: Best individuals: {bestt}, Best one: {best}")
+            best = tools.selBest(pop1, k=1)[0]
+            print(f"Generation {gen}: Best individual: {best}")
         else:
             # 子母集団生成
             offspring = tools.selTournamentDCD(pop2, len(pop2))
@@ -262,9 +257,8 @@ if __name__ == "__main__":
             record = stats.compile(pop2)
             logbook.record(gen=gen, evals=len(invalid_ind2), **record)
             print(logbook.stream)
-            bestt_out = tools.selBest(pop2, k=5)
-            best_out = bestt_out[0]
-            print(f"Generation {gen}: Best individual: {bestt_out} Best one: {best_out}")
+            best_out = tools.selBest(pop2, k=1)[0]
+            print(f"Generation {gen}: Best individual: {best_out}")
 
     print(pop1, pop1_init, stats)
     print(pop2, pop2_init, stats)

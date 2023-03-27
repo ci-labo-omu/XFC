@@ -8,7 +8,6 @@ from deap import creator, base, tools, algorithms
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
-from FreshController5 import NewController5
 
 # メンバシップ関数と出力を両方進化させる
 # メンバシップ関数変更ｰ>評価ｰ>出力ｰ>評価で1世代
@@ -35,7 +34,7 @@ if __name__ == "__main__":
         game = TrainerEnvironment()
         # Because of how the arcade library is implemented, there are memory leaks for instantiating the environment
         # too many times, keep instantiations to a small number and simply reuse the environment
-        controllers = [NewController5(gene, genes2), NewController5(gene, genes2)]
+        controllers = [NewController(gene, genes2), NewController(gene, genes2)]
         pre = time.perf_counter()
         score, perf_data = game.run(scenario=scenario, controllers=controllers)
         """print('Scenario eval time: ' + str(time.perf_counter() - pre))
@@ -46,7 +45,7 @@ if __name__ == "__main__":
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))"""
         f1 = np.average([team.accuracy for team in score.teams])
-        f2 = score.sim_time / 120 if sum([team.deaths for team in score.teams]) < 3 else 1 - score.sim_time / 120
+        f2 = 1 / score.sim_time if sum([team.deaths for team in score.teams]) < 3 else 1 - 1 / score.sim_time
         return f1, f2
 
 #あとは，run_2outから2つのあれを出すだけ
@@ -56,11 +55,10 @@ if __name__ == "__main__":
                 -3.07185922, 180.88739761, -17.52924744, -11.0651477, 105.48644365,
                 25.6119877, 56.20575568, 85.31037087, 156.41788735, 13.28000091,
                 75.04230663, 145.83883738, -5.34633099, 79.93202705, 170.01952603, ]
-    gene_emo = [-199.98046166669212, -28.15768218831569, 92.23536868121553, 652.5772687331447, 654.1464922353462, 176.28754791697088]
-    def run_2out(gene_out):
+    def run_2out(gene):
         accu, time = 0, 0
         for scene in Scenario_list:
-            f1, f2 = running(gene_emo, gene_out, scene)
+            f1, f2 = running(gene, new_gene, scene)
             accu += f1
             time += f2
         accu /= len(Scenario_list)
@@ -68,32 +66,17 @@ if __name__ == "__main__":
         return accu, time
 
 
-    def feasible(individual):
-        gene = np.array(individual)
-        return abs(gene[0:15]).all() < 480 and abs(gene[16:30]).all() < 180
-
-    # 制約適応度
-    def constrained_fitness(individual):
-        if not feasible(individual):
-            return 0, 0
-        else:
-            return run_2out(individual)
-
     creator.create("FitnessMax", base.Fitness, weights=(1.0, 1.0))
     creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox = base.Toolbox()
-    MIN, MAX = -1.0, 1.0
-    dim = 6
-    toolbox.register("attr_float", random.uniform, MIN, MAX)
-    toolbox.register("attr_angle", random.uniform, -1.0, 1.0)
-    toolbox.register("individual", tools.initCycle, creator.Individual,
-                     (15*[toolbox.attr_float]+15*[toolbox.attr_angle]), n=1)
+    MIN, MAX = -480, 480
+    num = 6
+    toolbox.register("attr_float", rng.uniform, MIN, MAX, num)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", run_2out)
-    toolbox.register("evaluate", constrained_fitness)
-    toolbox.decorate("evaluate", tools.DeltaPenalty(feasible, 0))
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=MIN, up=MAX, eta=20.0)
-    toolbox.register("mutates", tools.mutPolynomialBounded, up=MAX, low=MIN, indpb=1 / 15, eta= 30)
+    toolbox.register("mutates", tools.mutPolynomialBounded, up=MAX, low=MIN, indpb=1 / 6, eta= 30)
     toolbox.register("select", tools.selNSGA2)
 
 
@@ -129,13 +112,11 @@ if __name__ == "__main__":
 
     standard = np.array([0, 100, 200, 350, 500, 90])
 
-    NGEN = 200  # 繰り返し世代数
+    NGEN = 10000  # 繰り返し世代数
     MU = 100  # 集団内の個体数
     CXPB = 0.9  # 交叉率
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("std", np.std, axis=0)
     stats.register("min", np.min, axis=0)
-    stats.register("avg", np.average, axis=0)
     stats.register("max", np.max, axis=0)
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
@@ -184,8 +165,6 @@ if __name__ == "__main__":
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
-        best_individual = tools.selBest(pop, k=1)[0]
-        print(f"Generation {gen}: Best individual: {best_individual}, Best gene: {max(best_individual)}")
 
     print(pop, pop_init, stats)
 

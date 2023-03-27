@@ -46,7 +46,7 @@ if __name__ == "__main__":
         print('Accuracy: ' + str([team.accuracy for team in score.teams]))
         print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))"""
         f1 = np.average([team.accuracy for team in score.teams])
-        f2 = score.sim_time / 120 if sum([team.deaths for team in score.teams]) < 3 else 1 - score.sim_time / 120
+        f2 = 1 - score.sim_time / 120 if sum([team.deaths for team in score.teams]) < 3 else  score.sim_time / 120
         return f1, f2
 
 #あとは，run_2outから2つのあれを出すだけ
