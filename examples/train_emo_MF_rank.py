@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 25.6119877, 56.20575568, 85.31037087, 156.41788735, 13.28000091,
                 75.04230663, 145.83883738, -5.34633099, 79.93202705, 170.01952603, ]
 
-
+    f_list = [(0.0,0.0) for i in range(50)]
     def run_2out(gene, gene_out):
         accu, time = 0, 0
         for scene in Scenario_list:
@@ -65,6 +65,7 @@ if __name__ == "__main__":
             time += f2
         accu /= len(Scenario_list)
         time /= len(Scenario_list)
+
         return accu, time
 
 
@@ -75,21 +76,42 @@ if __name__ == "__main__":
 
     # 制約適応度
     def constrained_fitness(gene):
-
         if not feasible(gene):
             return 0, 0
         else:
             return run_2out(gene, best_out)
-
     def evaluate_individual_rank(individual):
         f1, f2 = constrained_fitness(individual)
-        f1_rank = sum(f1 <= ind[0] for ind in pop)
-        f2_rank = sum(f2 <= ind[1] for ind in pop)
+
+        f1_rank = sum(f1 <= f[0] for f in f_list)
+        f2_rank = sum(f2 <= f[1] for f in f_list)
         return f1_rank, f2_rank
 
 
+    def rankPopulation(population):
+        # Get the f1 and f2 values for all individuals in the population
+        f1_values, f2_values = zip(*[constrained_fitness(ind) for ind in population])
+
+        # Get the ranks for f1 and f2 values
+        f1_ranks = tools.rankData(f1_values, minimize=True)
+        f2_ranks = tools.rankData(f2_values, minimize=True)
+
+        # Set the f1_rank and f2_rank attributes for each individual
+        for i, ind in enumerate(population):
+            ind.f1_rank = f1_ranks[i]
+            ind.f2_rank = f2_ranks[i]
+
+        return population
+    def tournamentSelection(individuals, k):
+        chosen = []
+        for i in range(k):
+            aspirants = random.sample(individuals, 2)
+            chosen.append(max(aspirants, key=lambda x: (x.f1_rank, x.f2_rank)))
+        return chosen
+
+
     creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
-    creator.create("Individual", list, fitness=creator.FitnessMin)
+    creator.create("Individual", list, fitness=creator.FitnessMin, f1_rank=None, f2_rank=None)
     toolbox = base.Toolbox()
     dim = 6
     toolbox.register("attr_float", random.uniform, -0.2, 1.0)
@@ -137,6 +159,7 @@ if __name__ == "__main__":
     for gen in range(1, NGEN):
         # 子母集団生成
         offspring = tools.selTournamentDCD(pop, len(pop))
+        print(offspring)
         offspring = [toolbox.clone(ind) for ind in offspring]
         # 交叉と突然変異
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
@@ -169,7 +192,6 @@ if __name__ == "__main__":
         #print(f"non_dom:{non_dom}")
 
     print(pop, pop_init, stats)
-    print(tools.ParetoFront().items)
     fitnesses_init = np.array([list(pop_init[i].fitness.values) for i in range(len(pop_init))])
     fitnesses = np.array([list(pop[i].fitness.values) for i in range(len(pop))])
     plt.plot(fitnesses_init[:, 0], fitnesses_init[:, 1], "b.", label="Initial")
