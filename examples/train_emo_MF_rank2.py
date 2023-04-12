@@ -101,13 +101,12 @@ if __name__ == "__main__":
 
     class IndividualWithF(creator.Individual):
         def evaluate_individual_rank(self):
-            f1_values, f2_values = values_pop()
+            f1_values, f2_values = values_pop(pop)
             self.f1, self.f2 = constrained_fitness(self)
             return sum(f1 < self.f1 for f1 in f1_values), sum(f2 < self.f2 for f2 in f2_values)
 
         def return_rank(individual, f1_values, f2_values):
             return sum(f1 < individual.f1 for f1 in f1_values), sum(f2 < individual.f2 for f2 in f2_values)
-
 
 
     toolbox = base.Toolbox()
@@ -124,7 +123,7 @@ if __name__ == "__main__":
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=-0.2, up=1.0, eta=20.0)
 
     toolbox.register("mutates", tools.mutPolynomialBounded, up=1, low=-0.2, indpb=1 / 6, eta=30)
-    toolbox.register("select", tools.selNSGA2,)  # 自分でまねて，リスト考えて実装
+    toolbox.register("select", tools.selNSGA2, )  # 自分でまねて，リスト考えて実装
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("std", np.std, axis=0)
@@ -135,7 +134,7 @@ if __name__ == "__main__":
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
 
-    def values_pop():
+    def values_pop(pop):
         pp = np.array([[ind.f1, ind.f2] for ind in pop])
         f1_values, f2_values = pp.T[0], pp.T[1]
         return f1_values, f2_values
@@ -155,13 +154,12 @@ if __name__ == "__main__":
     logbook.record(gen=0, evals=len(invalid_ind), **record)
     print(logbook.stream)
 
-    f1_value, f2_value = values_pop()
-
     # 最適計算の実行
     for gen in range(1, NGEN):
         # 子母集団生成
         offspring = tools.selTournamentDCD(pop, len(pop))
         offspring = [toolbox.clone(ind) for ind in offspring]
+
         # 交叉と突然変異
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
             # 交叉させる個体を選択
@@ -174,10 +172,10 @@ if __name__ == "__main__":
             # 交叉と突然変異させた個体は適応度を削除する
             del ind1.fitness.values, ind2.fitness.values, ind1.f1, ind2.f2
         # 適応度を削除した個体について適応度の再評価を行う
-        """invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit"""
+            ind.fitness.values = fit
 
         # 次世代を選択
         print(pop)
