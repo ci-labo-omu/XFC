@@ -5,7 +5,6 @@ from deap import creator, base, tools, algorithms
 import matplotlib.pyplot as plt
 from func_emo import selNSGA22
 
-# Define the problem dimensions
 
 if __name__ == "__main__":
     # Instantiate an instance of TrainerEnvironment.
