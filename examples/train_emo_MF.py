@@ -1,8 +1,8 @@
 import math
 import random
 from FreshController2 import NewController2
-from kesslergame import TrainerEnvironment, KesslerController
-from kesslergame import Scenario
+from src.kesslergame import TrainerEnvironment, KesslerController
+from src.kesslergame import Scenario
 from Scenarios import *
 from deap import creator, base, tools, algorithms
 import numpy as np
@@ -126,7 +126,6 @@ if __name__ == "__main__":
 
 
     standard = np.array([0, 100, 200, 350, 500, 90])
-
     NGEN = 100  # 繰り返し世代数
     MU = 200  # 集団内の個体数
     CXPB = 0.9  # 交叉率

@@ -1,10 +1,10 @@
+import csv
 import random
 import numpy as np
 from Scenarios import *
 from deap import creator, base, tools, algorithms
 import matplotlib.pyplot as plt
-from func_emo import selNSGA22
-
+from FreshController5 import NewController5
 if __name__ == "__main__":
     # Instantiate an instance of TrainerEnvironment.
     # The default settings should be sufficient, but check out the documentation for more information
@@ -57,12 +57,9 @@ if __name__ == "__main__":
 
     # これは制約関数で，制約を満たすかどうかを判定する
 
-
-
     NGEN = 100  # 繰り返し世代数
     MU = 200  # 集団内の個体数
     CXPB = 0.9  # 交叉率
-
 
     f1_values = np.zeros((MU, 2))
     f2_values = np.zeros((MU, 2))
@@ -93,27 +90,23 @@ if __name__ == "__main__":
                 return self.f1, self.f2
             else:
                 return 0.0, 0.0
+
         def evaluate_individual_rank(self):
             f1, f2 = self.constrained_fitness()
             self.f1 = f1
             self.f2 = f2
-            f1_rank = sum(f1 <= f[0] for f in f_list)
-            f2_rank = sum(f2 <= f[1] for f in f_list)
+            f1_rank = sum(f1 < f for f in f1_values)
+            f2_rank = sum(f2 < f for f in f2_values)
             return f1_rank, f2_rank
-        #実際の評価関数は，f1, f2の値を，それぞれの目的関数の値として，それぞれの目的関数の値の順位を返すようにしてください
+
+        # 実際の評価関数は，f1, f2の値を，それぞれの目的関数の値として，それぞれの目的関数の値の順位を返すようにしてください
         # それぞれの目的関数の値の順位は，f_listの中の値と比較して，それぞれの目的関数の値が，f_listの中の値より小さいものの数を返すようにしてください
+        # evaluate only rank, not play game.
+        def evaluate_rank(self):
+            f1_rank = sum(self.f1 < f for f in f1_values)
+            f2_rank = sum(self.f2 < f for f in f2_values)
+            return f1_rank, f2_rank
 
-        def evaluate_individual(self):
-            f1, f2 = self.constrained_fitness()
-            self.f1 = f1
-            self.f2 = f2
-            return f1, f2
-
-
-    #f_listを作る
-    f_list = []
-    for i in range(MU):
-        f_list.append([f1_values[i, 0], f2_values[i, 0]])
 
 
 
@@ -151,9 +144,12 @@ if __name__ == "__main__":
     pop = toolbox.population(n=MU)
     pop_init = pop[:]
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+
+    #はじめのf_Valuesはダミー
+    f1_values, f2_values = values_pop(pop)
+
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
-        print(fit)
         ind.fitness.values = fit
     pop = toolbox.select(pop, len(pop))
 
@@ -162,13 +158,9 @@ if __name__ == "__main__":
     logbook.record(gen=0, evals=len(invalid_ind), **record)
     print(logbook.stream)
 
+
     # 最適計算の実行
     for gen in range(1, NGEN):
-        #ここでf_listを更新する
-        f1_values, f2_values = values_pop(pop)
-        f_list = []
-        for i in range(MU):
-            f_list.append([f1_values[i], f2_values[i]])
 
         # 子母集団生成
         offspring = tools.selTournamentDCD(pop, len(pop))
@@ -190,16 +182,22 @@ if __name__ == "__main__":
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
+        # ここでf_listを更新する
+        f1_values, f2_values = values_pop(pop)
+
+           # 母集団の全要素のfitness.valuesを，f_listを使って更新する
+        for ind in pop:
+            ind.fitness.values = ind.evaluate_rank()
 
         # 次世代を選択
         print(pop)
         pop = toolbox.select(pop + offspring, MU)
         print(f"Generation {gen}:")
         print(logbook.stream)
-        #各世代ごとの個体の評価値を表示，f1,f2も表示する
-        for j, ind in enumerate(pop):
-            print(f"Individual {j + 1}: {ind} Rank: {ind.fitness.values} Fitness: {ind.f1} {ind.f2}")
-
+        non_dom = tools.sortNondominated(pop, k=len(pop), first_front_only=True)
+        # 各世代ごとの個体の評価値を表示，f1,f2も表示する
+        for j, ind in enumerate(non_dom[0]):
+            print(f"Non-dominated individual {j + 1}: {ind} Rank: {ind.fitness.values} Fitness: {ind.f1} {ind.f2}")
 
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
@@ -215,7 +213,7 @@ if __name__ == "__main__":
     plt.ylabel("f2")
     plt.grid(True)
     plt.show()
-    #最終的なf1, f2のパレートフロントをプロットする
+    # 最終的なf1, f2のパレートフロントをプロットする
     f1_values, f2_values = values_pop(pop)
     plt.plot(f1_values, f2_values, "r.", label="Optimized")
     plt.legend(loc="upper right")
