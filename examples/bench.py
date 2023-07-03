@@ -51,11 +51,11 @@ if __name__ == "__main__":
     #ZDT4を解くためのインスタンスを作る
 
     toolbox.register("attr_float", random.uniform, 0, 1)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=3)
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=30)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", dtlz1, obj = 2)
+    toolbox.register("evaluate", zdt2,)
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=0, up=1, eta=20.0)
 
     toolbox.register("mutates", tools.mutPolynomialBounded, up=1, low=0, indpb=1.0 / 10.0, eta=20)
@@ -101,12 +101,15 @@ if __name__ == "__main__":
         # 交叉と突然変異
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
             # 交叉させる個体を選択
+            print(ind1, ind2)
             if random.random() <= CXPB:
                 # 交叉
                 toolbox.mate(ind1, ind2)
             # 突然変異
             toolbox.mutates(ind1)
             toolbox.mutates(ind2)
+            print(ind1, ind2)
+
             # 交叉と突然変異させた個体は適応度を削除する
             del ind1.fitness.values, ind2.fitness.values
         # 適応度を削除した個体について適応度の再評価を行う
@@ -122,16 +125,17 @@ if __name__ == "__main__":
         print(logbook.stream)
         non_dom = tools.sortNondominated(pop, k=len(pop), first_front_only=True)
         for j, ind in enumerate(non_dom[0]):
-            print(f"Non-dominated individual {j + 1}: {ind} Fitness: {ind.fitness.values}")
+            print(f"Non-dominated individual {j + 1}: {ind} Fitness:      {np.array(ind.fitness.values)}")
 
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
 
 
     # 最終的なf1, f2のパレートフロントをプロットする
-    print(tools.ParetoFront().items)
+    print(f"pop = {pop}")
     fitnesses_init = np.array([list(pop_init[i].fitness.values) for i in range(len(pop_init))])
     fitnesses = np.array([list(pop[i].fitness.values) for i in range(len(pop))])
+
     plt.plot(fitnesses[:, 0], fitnesses[:, 1], "r.")
     plt.title("Fitnesses")
     plt.xlabel("f1")

@@ -132,19 +132,24 @@ if __name__ == "__main__":
     logbook = tools.Logbook()
     logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
+    def values_pop2(pop, f1_values, f2_values):
+        f1_values = np.append(f1_values, [ind.f1 for ind in pop])
+        f2_values = np.append(f2_values, [ind.f2 for ind in pop])
+        return f1_values, f2_values
 
     def values_pop(pop):
         pp = np.array([[ind.f1, ind.f2] for ind in pop])
         f1_values, f2_values = pp.T[0], pp.T[1]
         return f1_values, f2_values
+
     def plot_pf(f1_nondom, f2_nondom, gen):
-        #第1パレートフロントのみをプロットする
-        plt.plot(f1_nondom, f2_nondom, "r.",)
-        plt.title(f"Fitness(NSGA2_Rank, GEN{gen})")
+        plt.plot(f1_nondom, f2_nondom, "r.")
+        plt.title(f"Fitness(NSGA2_Rank, All Archive GEN{gen})")
         plt.xlabel("f1")
         plt.ylabel("f2")
         plt.grid(True)
         plt.show()
+
 
     # 第一世代の生成
     pop = toolbox.population(n=MU)
@@ -168,12 +173,10 @@ if __name__ == "__main__":
     # 最適計算の実行
     for gen in range(1, NGEN+1):
 
-
         # 子母集団生成
         offspring = tools.selTournamentDCD(pop, len(pop))
-        print(len(offspring))
         offspring = [toolbox.clone(ind) for ind in offspring]
-        print(len(offspring))
+
 
         # 交叉と突然変異
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
@@ -192,7 +195,7 @@ if __name__ == "__main__":
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
         # ここでf_listを更新する
-        f1_values, f2_values = values_pop(pop)
+        f1_values, f2_values = values_pop2(pop, f1_values, f2_values)
 
            # 母集団の全要素のfitness.valuesを，f_listを使って更新する
         for ind in pop:
@@ -204,21 +207,22 @@ if __name__ == "__main__":
         print(f"Generation {gen}:")
         print(logbook.stream)
         non_dom = tools.sortNondominated(pop, k=len(pop), first_front_only=True)
-        print(non_dom)
         # 各世代ごとの個体の評価値を表示，f1,f2も表示する
         for j, ind in enumerate(non_dom[0]):
             print(f"Non-dominated individual {j + 1}: {ind} Rank: {ind.fitness.values} Fitness: {ind.f1} {ind.f2}")
-
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
-        if(gen % 100 == 0):
+        if (gen % 100 == 0):
             f1_nondom = np.array([ind.f1 for ind in non_dom[0]])
             f2_nondom = np.array([ind.f2 for ind in non_dom[0]])
-            plot_pf(f1_nondom, f2_nondom,gen)
+            plot_pf(f1_nondom, f2_nondom, gen)
 
     print(pop, pop_init, stats)
     fitnesses_init = np.array([list(pop_init[i].fitness.values) for i in range(len(pop_init))])
     fitnesses = np.array([list(pop[i].fitness.values) for i in range(len(pop))])
-    print(f"rankf1 = {f1_nondom}")
-    print(f"rankf2 = {f2_nondom}")
+
+    # 最終的なf1, f2のパレートフロントをプロットする
+
+    print(f"archive_rankf1 = {f1_nondom}")
+    print(f"archive_rankf2 = {f2_nondom}")
     plot_pf(f1_nondom, f2_nondom, NGEN)

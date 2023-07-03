@@ -1,4 +1,3 @@
-import csv
 import random
 import numpy as np
 from Scenarios import *
@@ -45,20 +44,20 @@ if __name__ == "__main__":
     # this is a evaluate function
     def run_2out(gene, gene_out):
         accu, time = 0, 0
-        for scene in Scenario_list:
+        for scene in Scenario2:
             f1, f2 = running(gene, gene_out, scene)
             accu += f1
             time += f2
-        accu /= len(Scenario_list)
-        time /= len(Scenario_list)
+        accu /= len(Scenario2)
+        time /= len(Scenario2)
 
         return [accu, time]
 
 
     # これは制約関数で，制約を満たすかどうかを判定する
 
-    NGEN = 100  # 繰り返し世代数
-    MU = 200  # 集団内の個体数
+    NGEN = 500  # 繰り返し世代数
+    MU = 100  # 集団内の個体数
     CXPB = 0.9  # 交叉率
 
     f1_values = np.zeros((MU, 2))
@@ -122,7 +121,7 @@ if __name__ == "__main__":
     toolbox.register("evaluate", IndividualWithF.evaluate_individual_rank)
     toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=-0.2, up=1.0, eta=20.0)
 
-    toolbox.register("mutates", tools.mutPolynomialBounded, up=1, low=-0.2, indpb=1 / 6, eta=30)
+    toolbox.register("mutates", tools.mutPolynomialBounded, up=1, low=-0.2, indpb=1 / 6, eta=20)
     toolbox.register("select", tools.selNSGA2, )  # 自分でまねて，リスト考えて実装
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -138,7 +137,14 @@ if __name__ == "__main__":
         pp = np.array([[ind.f1, ind.f2] for ind in pop])
         f1_values, f2_values = pp.T[0], pp.T[1]
         return f1_values, f2_values
-
+    def plot_pf(f1_nondom, f2_nondom, gen):
+        #第1パレートフロントのみをプロットする
+        plt.plot(f1_nondom, f2_nondom, "r.",)
+        plt.title(f"Fitness(NSGA2_Rank, GEN{gen})")
+        plt.xlabel("f1")
+        plt.ylabel("f2")
+        plt.grid(True)
+        plt.show()
 
     # 第一世代の生成
     pop = toolbox.population(n=MU)
@@ -160,11 +166,17 @@ if __name__ == "__main__":
 
 
     # 最適計算の実行
-    for gen in range(1, NGEN):
+    for gen in range(1, NGEN+1):
+
 
         # 子母集団生成
+        print(f"pop:{pop}")
         offspring = tools.selTournamentDCD(pop, len(pop))
+        print(f"offsp1:{offspring}")
+
         offspring = [toolbox.clone(ind) for ind in offspring]
+        print(f"offsp2:{offspring}")
+
 
         # 交叉と突然変異
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
@@ -177,6 +189,7 @@ if __name__ == "__main__":
             toolbox.mutates(ind2)
             # 交叉と突然変異させた個体は適応度を削除する
             del ind1.fitness.values, ind2.fitness.values, ind1.f1, ind2.f2
+        print(f"offsp3:{offspring}")
         # 適応度を削除した個体について適応度の再評価を行う
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
@@ -190,35 +203,28 @@ if __name__ == "__main__":
             ind.fitness.values = ind.evaluate_rank()
 
         # 次世代を選択
-        print(pop)
+        print(f"{len(pop)}pop2{pop}")
         pop = toolbox.select(pop + offspring, MU)
+        print(f"{len(pop)}pop3{pop}")
+
         print(f"Generation {gen}:")
         print(logbook.stream)
         non_dom = tools.sortNondominated(pop, k=len(pop), first_front_only=True)
+        print(non_dom)
         # 各世代ごとの個体の評価値を表示，f1,f2も表示する
         for j, ind in enumerate(non_dom[0]):
             print(f"Non-dominated individual {j + 1}: {ind} Rank: {ind.fitness.values} Fitness: {ind.f1} {ind.f2}")
 
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
+        if(gen % 100 == 0):
+            f1_nondom = np.array([ind.f1 for ind in non_dom[0]])
+            f2_nondom = np.array([ind.f2 for ind in non_dom[0]])
+            plot_pf(f1_nondom, f2_nondom,gen)
 
     print(pop, pop_init, stats)
     fitnesses_init = np.array([list(pop_init[i].fitness.values) for i in range(len(pop_init))])
     fitnesses = np.array([list(pop[i].fitness.values) for i in range(len(pop))])
-    plt.plot(fitnesses_init[:, 0], fitnesses_init[:, 1], "b.", label="Initial")
-    plt.plot(fitnesses[:, 0], fitnesses[:, 1], "r.", label="Optimized")
-    plt.legend(loc="upper right")
-    plt.title("fitnesses")
-    plt.xlabel("f1")
-    plt.ylabel("f2")
-    plt.grid(True)
-    plt.show()
-    # 最終的なf1, f2のパレートフロントをプロットする
-    f1_values, f2_values = values_pop(pop)
-    plt.plot(f1_values, f2_values, "r.", label="Optimized")
-    plt.legend(loc="upper right")
-    plt.title("fitnesses")
-    plt.xlabel("f1")
-    plt.ylabel("f2")
-    plt.grid(True)
-    plt.show()
+    print(f"rankf1 = {f1_nondom}")
+    print(f"rankf2 = {f2_nondom}")
+    plot_pf(f1_nondom, f2_nondom, NGEN)
