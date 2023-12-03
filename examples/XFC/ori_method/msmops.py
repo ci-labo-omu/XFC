@@ -1,17 +1,8 @@
 import os
-
-import numpy as np
-from matplotlib import pyplot as plt
-from pymoo.core.population import Population
-from pymoo.core.problem import Problem
 from pymoo.util.ref_dirs import get_reference_directions
-
 from NSGA_RANK import *
-from MOEAD_Rank import *
-from pymoo.algorithms.moo.moead import MOEAD
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
-
 from nondom import *
 from pymoo.core.problem import Problem
 from Multi_series import *
@@ -83,7 +74,6 @@ class four_bar_truss2(Problem):
         g3 = np.maximum(np.sqrt(2) * self.F / self.sigma - x[:, 2], np.maximum(x[:, 2] - 3 * self.F / self.sigma, 0))
         # 制約違反の合計を計算
         constraint_violation = g1 + g2 + g3 + g4
-        print(f1.shape)
 
         # 制約違反を目的関数値に追加（ペナルティ法など）
         penalty = 1  # 違反した場合のペナルティ
@@ -91,7 +81,8 @@ class four_bar_truss2(Problem):
 
 
 class WeldedBeamProblem(Problem):
-    def __init__(self):
+    def __init__(self, scenario, **kwargs):
+        super().__init__(**kwargs)
         self.rho = 0.284  # density lb/in^3
         self.F = 6000  # mass lb
         self.E = 29 * 10 ** 6  # modulus of elasticity psi
@@ -100,17 +91,18 @@ class WeldedBeamProblem(Problem):
         self.sigma = 30000  # stress limit psi
         self.k = 0.87  # constant parameter
         self.phi = 13600  # yield stress psi
+        self.scenario = scenario
 
-    def evaluate(self, individual, scenario):
-        x1, x2, x3 = individual
-        if scenario == 1:
+    def _evaluate(self, x, out, *args, **kwargs):
+        x1, x2, x3 = x
+        if self.scenario == 1:
             # f1 and f2 in scenario 1
             f1_1 = self.rho * x1 * x2 * x3
             f2_1 = 2 * self.F ** 2 * x3 ** 3 / (self.E * x1 * x2 ** 3)
             g1_violation = self.constraint_g1(x1, x2, x3)
             return (f1_1 + f2_1) + 1e5 * g1_violation,
 
-        if scenario == 2:
+        if self.scenario == 2:
             # f1 and f2 in scenario 2
             f1_2 = self.rho * x1 * x2 * x3
             f2_2 = self.T ** 2 * x3 / (2 * self.G * max(x1, x2) * min(x1, x2) ** 3)
@@ -129,17 +121,17 @@ class WeldedBeamProblem(Problem):
 def main1():
     ref_dirs = get_reference_directions("uniform", 2, n_partitions=100)
 
-    problem = four_bar_truss(2)
+    problem = WeldedBeamProblem(2)
     algorithm1 = NSGA2_Rank(
-        #pop_size=150,
-         ref_dirs=ref_dirs,
+        pop_size=150,
+        ref_dirs=ref_dirs,
 
-        # eliminate_duplicates=True,
+        eliminate_duplicates=True,
     )
     algorithm2 = NSGA2(
         pop_size=150,
         # ref_dirs=ref_dirs,
-        # eliminate_duplicates=True,
+        eliminate_duplicates=True,
     )
 
     res1 = minimize(problem,
@@ -164,7 +156,6 @@ def main1():
     X2 = population2.get("X")
 
     # print(objectives1)
-    print(objectives2)
     # print(f"X1 = {X1}")
     # print(f"X2 = {X2}")
     x1 = objectives1[:, 0]
@@ -216,7 +207,6 @@ def main2():
             y5 = np.array(res5[0])[:, 1]
             fig = plt.figure()
             ax = fig.add_subplot()
-            print(id(x_rank))
             plt.xlim(0, 3500)
             plt.ylim(0, 0.1101)
             plt.yticks(np.arange(0, 0.111, 0.01))
@@ -234,73 +224,6 @@ def main2():
             file_path = os.path.join(folder_path, filename)
             plt.savefig(file_path)
             plt.show()
-
-
-def main3():
-    problem1 = four_bar_truss(1)
-    problem2 = four_bar_truss(3)
-    problem3 = four_bar_truss(2)
-
-    algorithm1 = NSGA2_Rank(
-        pop_size=150,
-        # ref_dirs=ref_dirs,
-        eliminate_duplicates=True,
-    )
-    algorithm2 = NSGA2(
-        pop_size=150,
-        # ref_dirs=ref_dirs,
-        eliminate_duplicates=True,
-    )
-    res1_1 = minimize(problem1,
-                      algorithm1,
-                      ('n_gen', 2000),
-                      verbose=False)
-    res1_2 = minimize(problem2,
-                      algorithm1,
-                      ('n_gen', 2000),
-                      verbose=False,
-                      pop_init=res1_1.pop)
-    res1 = minimize(problem3,
-                    algorithm1,
-                    ('n_gen', 2000),
-                    verbose=False,
-                    pop_init=res1_2.pop)
-
-    res2_1 = minimize(problem1,
-                      algorithm2,
-                      ('n_gen', 2000),
-                      verbose=False)
-    res2_2 = minimize(problem2,
-                      algorithm2,
-                      ('n_gen', 2000),
-                      verbose=False,
-                      pop_init=res2_1.pop)
-    res2 = minimize(problem3,
-                    algorithm2,
-                    ('n_gen', 2000),
-                    verbose=False,
-                    pop_init=res2_2.pop)
-
-    # res は minimize() 関数の実行結果
-    population1 = res1.pop
-    population2 = res2.pop
-    # 各個体の目的関数値
-    objectives1 = population1.get("F")
-    objectives2 = population2.get("F")
-    # 各個体の変数値
-    X1 = population1.get("X")
-    X2 = population2.get("X")
-    print(f"X1 = {X1}")
-    print(f"X2 = {X2}")
-
-    # np.savez('X_Series2.npz', X_Rank_123=XR123, X_123=X123, X_Rank_132=X1, X_132=X2)
-
-    # with open('Multi_series.py', 'a') as file:
-    #   file.write(f"\n#Learning 1->3->2 \n")
-    #   file.write(f"X_Rank132 = {list(X1)}\n")
-    #   file.write(f"X_132 = {list(X2)}\n")
-    #   file.write(f"F_Rank132 = {list(objectives1)}\n")
-    #   file.write(f"F_132 = {list(objectives2)}\n")
 
 
 class four_bar_truss3(Problem):
@@ -346,7 +269,39 @@ class four_bar_truss3(Problem):
         out["G"] = np.column_stack([g1, g2, g3, g4])
 
 
-def main4():
+class NP3(Problem):
+    def g1(self, x):
+        return 0.6 + 11 * sum(x[2:]) / (len(x) - 1)
+
+    def g2(self, x):
+        s = sum(x[2:])
+        return 1 + 9 * sum((x[2:] - 0.5) ** 2) / (len(x) - 1)
+
+    def g3(self, x):
+        s = sum(x[2:])
+        return 1.5 + 20 * sum((x[2:] - 1.5) ** 2) / (len(x) - 1)
+
+    def __init__(self, scenario):
+        self.scenario = scenario
+        super().__init__(n_var=4, n_obj=2, n_ieq_constr=4, xl=np.array([1e-10, 1e-10, 1e-10, 1e-10]),
+                         xu=np.array([1.0, 1.0, 1.0, 1.0]))
+
+    def _evaluate(self, x, out, *args, **kwargs):
+
+        if self.scenario == 1:
+            f1 = x[:, 0]
+            f2 = self.g1(1 - np.sqrt(f1 / self.g1(x[:, 1:])))
+        elif self.scenario == 2:
+            f1 = x[:, 0]
+            f2 = self.g2(1 - np.sqrt(f1 / self.g2(x[:, 1:])))
+        elif self.scenario == 3:
+            f1 = (x[:, 0] + x[:, 1]) ** 2
+            f2 = self.g3(1 - np.sqrt(f1 / self.g3(x[:, 1:])))
+        else:
+            raise ValueError("scenario must be 1, 2 or 3")
+
+
+def main3():
     algorithm1 = NSGA2_Rank(
         pop_size=150,
         # ref_dirs=ref_dirs,
@@ -398,8 +353,8 @@ def main4():
         file.write(f"\n#Learning 2->3->1 * 2000 \n")
         file.write(f"X_Rank111 = {list(X1)}\n")
         file.write(f"X111 = {list(X2)}\n")
-        #file.write(f"F_Rank = {list(objectives1)}\n")
-        #file.write(f"F = {list(objectives2)}\n")
+        # file.write(f"F_Rank = {list(objectives1)}\n")
+        # file.write(f"F = {list(objectives2)}\n")
 
 
 main1()
